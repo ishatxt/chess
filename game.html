@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lichess Engine Clone — Pink Board</title>
+  <title>iChess — Engine Game</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 
   <style>
@@ -18,7 +17,7 @@
       --bg-panel: #262421;
       --bg-card: #2b2925;
       --bg-card-hover: #363431;
-      --accent: #3692e7;
+      --accent: #c27ba0;
       --text-white: #c9d1d9;
       --text-muted: #8b8886;
       --border-dark: #3e3b37;
@@ -27,6 +26,11 @@
       --board-dark: #c27ba0;
       --highlight-selected: rgba(220, 100, 160, 0.5);
       --lastmove-yellow: rgba(155, 81, 224, 0.5);
+
+      /* Eval Bar Color Theme */
+      --eval-bg-dark: #2b2925;
+      --eval-pink: #c27ba0;
+      --eval-white: #ffffff;
     }
 
     * {
@@ -46,6 +50,7 @@
       align-items: center;
       padding: 1.5rem;
     }
+
     .chess-app {
       display: flex;
       gap: 2rem;
@@ -112,37 +117,50 @@
 
     .board-layout {
       display: flex;
-      gap: 8px;
+      gap: 12px;
       align-items: stretch;
       width: 100%;
     }
 
+    /* --- Chess.com Style Capsule Eval Bar --- */
     .eval-wrapper {
-      width: 16px;
-      background: #403d39;
-      border-radius: 2px;
+      width: 24px;
+      background-color: var(--eval-pink);
+      border-radius: 12px;
       display: flex;
       flex-direction: column-reverse;
       overflow: hidden;
       position: relative;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
     }
 
     .eval-fill {
       width: 100%;
       height: 50%;
-      background: #fff;
+      background-color: var(--eval-white);
       transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .eval-text {
       position: absolute;
-      top: 4px;
       width: 100%;
       text-align: center;
-      font-size: 0.6rem;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.65rem;
       font-weight: 700;
-      color: #000;
-      z-index: 2;
+      z-index: 5;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .eval-text.bottom {
+      bottom: 6px;
+      color: #161512;
+    }
+
+    .eval-text.top {
+      top: 6px;
+      color: #ffffff;
     }
 
     .board-frame {
@@ -297,15 +315,80 @@
 
     .setting-group {
       display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .setting-header {
+      display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.5rem;
     }
 
     .setting-group label {
       font-size: 0.85rem;
       color: var(--text-muted);
       font-weight: 600;
+    }
+
+    .elo-val-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--bg-card);
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      border: 1px solid var(--border-dark);
+    }
+
+    /* Range Slider Styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+
+    input[type=range]:focus {
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: var(--bg-card);
+      border-radius: 3px;
+      border: 1px solid var(--border-dark);
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -6px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    }
+
+    input[type=range]::-moz-range-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: var(--bg-card);
+      border-radius: 3px;
+      border: 1px solid var(--border-dark);
+    }
+
+    input[type=range]::-moz-range-thumb {
+      height: 16px;
+      width: 16px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
     }
 
     select {
@@ -317,12 +400,7 @@
       font-size: 0.85rem;
       outline: none;
       font-weight: 600;
-      flex: 1;
-      max-width: 200px;
-    }
-
-    select:hover {
-      background-color: var(--bg-card-hover);
+      width: 100%;
     }
 
     .btn-row {
@@ -378,10 +456,12 @@
       </div>
 
       <div class="board-layout">
-        <div class="eval-wrapper" title="Engine Evaluation">
-          <div class="eval-text" id="evalText">0.0</div>
+        <!-- Capsule Style Eval Bar -->
+        <div class="eval-wrapper" title="Evaluation Bar">
+          <div class="eval-text bottom" id="evalText">0.0</div>
           <div class="eval-fill" id="evalFill"></div>
         </div>
+        
         <div class="board-frame">
           <div id="board"></div>
         </div>
@@ -391,7 +471,7 @@
         <div class="player-details">
           <div class="player-avatar"><i class="fa-solid fa-user"></i></div>
           <div>
-            <div class="player-name" id="bottomPlayerName">Anonymous</div>
+            <div class="player-name" id="bottomPlayerName">Player</div>
             <div style="font-size: 0.75rem; color: var(--text-muted);">Human</div>
           </div>
         </div>
@@ -412,7 +492,9 @@
 
       <div class="control-panel">
         <div class="setting-group">
-          <label for="sideSelect">Play As</label>
+          <div class="setting-header">
+            <label for="sideSelect">Play As</label>
+          </div>
           <select id="sideSelect">
             <option value="white" selected>White</option>
             <option value="black">Black</option>
@@ -420,13 +502,11 @@
         </div>
 
         <div class="setting-group">
-          <label for="depthSelect">Engine Level</label>
-          <select id="depthSelect">
-            <option value="1">Level 1 (Depth 1)</option>
-            <option value="4" selected>Level 4 (Depth 4)</option>
-            <option value="10">Level 8 (Depth 10)</option>
-            <option value="15">Stockfish 16 (Depth 15)</option>
-          </select>
+          <div class="setting-header">
+            <label for="eloSlider">Engine Rating</label>
+            <span class="elo-val-badge" id="eloValueDisplay">1500 Elo</span>
+          </div>
+          <input type="range" id="eloSlider" min="100" max="3700" step="50" value="1500">
         </div>
 
         <div class="btn-row">
@@ -450,10 +530,7 @@
           capture: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Capture.mp3'),
           check: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Check.mp3')
         };
-
-        Object.values(this.sounds).forEach(audio => {
-          audio.preload = 'auto';
-        });
+        Object.values(this.sounds).forEach(audio => audio.preload = 'auto');
       }
 
       play(type) {
@@ -471,7 +548,7 @@
     let game = new Chess();
     let stockfish = null;
     let userColor = 'white';
-    let engineDepth = 4;
+    let targetElo = 1500;
     let selectedSquare = null;
     let lastMove = null;
     let isEngineThinking = false;
@@ -489,9 +566,28 @@
           stockfish = new Worker(URL.createObjectURL(blob));
           stockfish.onmessage = handleEngineMessage;
           stockfish.postMessage('uci');
-          stockfish.postMessage('isready');
+          configureEngineStrength();
+          $('#engineStatus').text('Ready');
+        })
+        .catch(() => {
+          stockfish = new Worker('stockfish.js');
+          stockfish.onmessage = handleEngineMessage;
+          stockfish.postMessage('uci');
+          configureEngineStrength();
           $('#engineStatus').text('Ready');
         });
+    }
+
+    function configureEngineStrength() {
+      if (!stockfish) return;
+      stockfish.postMessage('uci');
+      if (targetElo >= 3700) {
+        stockfish.postMessage('setoption name UCI_LimitStrength value false');
+      } else {
+        stockfish.postMessage('setoption name UCI_LimitStrength value true');
+        stockfish.postMessage(`setoption name UCI_Elo value ${targetElo}`);
+      }
+      stockfish.postMessage('isready');
     }
 
     function handleEngineMessage(e) {
@@ -502,23 +598,22 @@
         if (cpMatch) {
           let cp = parseInt(cpMatch[1]);
           if (game.turn() === 'b') cp = -cp;
-          
+
           const scoreStr = (cp / 100).toFixed(1);
-          const displayScore = scoreStr > 0 ? `+${scoreStr}` : scoreStr;
-          
+          const displayScore = cp > 0 ? `+${scoreStr}` : scoreStr;
+
           const percent = Math.max(5, Math.min(95, 50 + (cp / 15)));
-          
+
           $('#evalFill').css('height', `${percent}%`);
-          
-          if(percent > 80) {
-              $('#evalText').css('color', '#000');
-          } else if (percent < 20) {
-              $('#evalText').css('color', '#fff');
+
+          const $evalText = $('#evalText');
+          $evalText.text(displayScore);
+
+          if (percent > 50) {
+            $evalText.removeClass('top').addClass('bottom');
           } else {
-              $('#evalText').css('color', '#000');
+            $evalText.removeClass('bottom').addClass('top');
           }
-          
-          $('#evalText').text(displayScore);
         }
       }
 
@@ -542,7 +637,7 @@
       isEngineThinking = true;
       $('#engineStatus').text('Calculating...');
       stockfish.postMessage(`position fen ${game.fen()}`);
-      stockfish.postMessage(`go depth ${engineDepth}`);
+      stockfish.postMessage('go movetime 1000');
     }
 
     function executeMove(moveObj) {
@@ -659,16 +754,13 @@
     function updateBanner() {
       const turn = game.turn() === 'w' ? 'White' : 'Black';
       if (game.in_checkmate()) {
-          $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} is victorious`);
-      }
-      else if (game.in_draw()) {
-          $('#statusBanner').html(`<i class="fa-solid fa-handshake"></i> Draw`);
-      }
-      else if (game.in_check()) {
-          $('#statusBanner').html(`<i class="fa-solid fa-triangle-exclamation" style="color:#c33"></i> Check! ${turn} to move`);
-      }
-      else {
-          $('#statusBanner').html(`<i class="fa-solid fa-circle-play"></i> ${turn} to move`);
+        $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} is victorious`);
+      } else if (game.in_draw()) {
+        $('#statusBanner').html(`<i class="fa-solid fa-handshake"></i> Draw`);
+      } else if (game.in_check()) {
+        $('#statusBanner').html(`<i class="fa-solid fa-triangle-exclamation" style="color:#c33"></i> Check! ${turn} to move`);
+      } else {
+        $('#statusBanner').html(`<i class="fa-solid fa-circle-play"></i> ${turn} to move`);
       }
     }
 
@@ -718,21 +810,14 @@
       selectedSquare = null;
 
       userColor = $('#sideSelect').val();
-      engineDepth = parseInt($('#depthSelect').val());
+      targetElo = parseInt($('#eloSlider').val());
+      configureEngineStrength();
 
       board.orientation(userColor);
       board.position('start');
 
-      if (userColor === 'white') {
-        $('#bottomPlayerName').text('Anonymous');
-        $('#topPlayerName').text('Stockfish Engine');
-      } else {
-        $('#bottomPlayerName').text('Anonymous');
-        $('#topPlayerName').text('Stockfish Engine');
-      }
-
       $('#evalFill').css('height', '50%');
-      $('#evalText').text('0.0').css('color', '#000');
+      $('#evalText').text('0.0').removeClass('top').addClass('bottom');
 
       removeHighlights();
       updateUI();
@@ -764,7 +849,13 @@
       });
       $('#btnFlip').click(() => board.flip());
       $('#sideSelect').change(startNewGame);
-      $('#depthSelect').change(function() { engineDepth = parseInt($(this).val()); });
+
+      // Elo Slider Handler
+      $('#eloSlider').on('input change', function() {
+        targetElo = parseInt($(this).val());
+        $('#eloValueDisplay').text(targetElo >= 3700 ? '3700 (Max)' : `${targetElo} Elo`);
+        configureEngineStrength();
+      });
 
       updateUI();
     });
