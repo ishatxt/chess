@@ -26,6 +26,9 @@
       --board-dark: #c27ba0;
       --highlight-selected: rgba(220, 100, 160, 0.5);
       --lastmove-yellow: rgba(155, 81, 224, 0.5);
+      
+      --hint-from: rgba(0, 212, 255, 0.75);
+      --hint-to: rgba(16, 185, 129, 0.85);
 
       --eval-bg-dark: #2b2925;
       --eval-pink: #c27ba0;
@@ -194,6 +197,17 @@
 
     .highlight-lastmove {
       background-color: var(--lastmove-yellow) !important;
+    }
+
+    /* Hint Styles */
+    .highlight-hint-from {
+      box-shadow: inset 0 0 0 4px #00d4ff !important;
+      background-color: rgba(0, 212, 255, 0.35) !important;
+    }
+
+    .highlight-hint-to {
+      box-shadow: inset 0 0 0 4px #10b981 !important;
+      background-color: rgba(16, 185, 129, 0.35) !important;
     }
 
     .legal-dot::after {
@@ -404,15 +418,15 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.5rem;
-      margin-top: 0.5rem;
+      margin-top: 0.2rem;
     }
 
     .btn-action {
       background-color: var(--bg-card);
       color: var(--text-white);
       border: 1px solid var(--border-dark);
-      padding: 0.7rem;
-      font-size: 0.9rem;
+      padding: 0.65rem;
+      font-size: 0.85rem;
       font-weight: 600;
       border-radius: 3px;
       cursor: pointer;
@@ -434,6 +448,28 @@
 
     .btn-primary {
       grid-column: span 2;
+    }
+
+    .btn-hint {
+      background-color: #243542;
+      border-color: #3b5266;
+      color: #00d4ff;
+    }
+
+    .btn-hint:hover {
+      background-color: #2c4457;
+      color: #5ce1ff;
+    }
+
+    .btn-bestmove {
+      background-color: #233b33;
+      border-color: #325a4d;
+      color: #10b981;
+    }
+
+    .btn-bestmove:hover {
+      background-color: #2a4b41;
+      color: #34d399;
     }
   </style>
 </head>
@@ -506,6 +542,8 @@
         </div>
 
         <div class="btn-row">
+          <button class="btn-action btn-hint" id="btnHint"><i class="fa-solid fa-lightbulb"></i> Hint</button>
+          <button class="btn-action btn-bestmove" id="btnPlayBest"><i class="fa-solid fa-wand-magic-sparkles"></i> Play Best</button>
           <button class="btn-action btn-primary" id="btnNewGame"><i class="fa-solid fa-plus"></i> Create a game</button>
           <button class="btn-action" id="btnUndo"><i class="fa-solid fa-backward-step"></i> Undo</button>
           <button class="btn-action" id="btnFlip"><i class="fa-solid fa-retweet"></i> Flip</button>
@@ -548,6 +586,10 @@
     let selectedSquare = null;
     let lastMove = null;
     let isEngineThinking = false;
+
+    // Hint & Best Move Modes
+    let isRequestingHint = false;
+    let isRequestingAutoMove = false;
 
     const pieceSymbols = { p: '♟', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚' };
 
@@ -619,15 +661,47 @@
       if (line.startsWith('bestmove')) {
         const moveMatch = line.match(/^bestmove\s([a-h][1-8][a-h][1-8][qrbn]?)/);
         if (moveMatch) {
-          let chosenMove = {
+          const rawBestMove = {
             from: moveMatch[1].substring(0, 2),
             to: moveMatch[1].substring(2, 4),
             promotion: moveMatch[1].length === 5 ? moveMatch[1][4] : 'q'
           };
 
-          // --- 100 ELO BLUNDER MECHANIC ---
-          // Calculate blunder chance (60% at 100 Elo, scaling down to 0% at 1200 Elo)
+          // --- HANDLE HINT REQUEST ---
+          if (isRequestingHint) {
+            isRequestingHint = false;
+            isEngineThinking = false;
+            $('#engineStatus').text('Ready');
+
+            removeHighlights();
+            highlightLastMove();
+
+            $(`#board .square-${rawBestMove.from}`).addClass('highlight-hint-from');
+            $(`#board .square-${rawBestMove.to}`).addClass('highlight-hint-to');
+
+            // Format move into standard SAN for status banner
+            const tempMove = game.move(rawBestMove);
+            if (tempMove) {
+              const sanNotation = tempMove.san;
+              game.undo(); // Undo simulation
+              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try playing <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
+            }
+            return;
+          }
+
+          // --- HANDLE PLAY BEST MOVE REQUEST ---
+          if (isRequestingAutoMove) {
+            isRequestingAutoMove = false;
+            isEngineThinking = false;
+            $('#engineStatus').text('Ready');
+            executeMove(rawBestMove);
+            return;
+          }
+
+          // --- STANDARD ENGINE MOVE LOGIC (WITH BLUNDER MECHANIC) ---
+          let chosenMove = rawBestMove;
           let blunderChance = 0;
+
           if (targetElo < 1200) {
             blunderChance = Math.max(0, 0.60 - ((targetElo - 100) / 1100) * 0.60);
           }
@@ -668,6 +742,32 @@
       }
     }
 
+    function requestHint() {
+      if (!isHumanTurn() || !stockfish) return;
+      isRequestingHint = true;
+      isEngineThinking = true;
+      $('#engineStatus').text('Calculating hint...');
+      
+      stockfish.postMessage('uci');
+      stockfish.postMessage('setoption name UCI_LimitStrength value false');
+      stockfish.postMessage('setoption name Skill Level value 20');
+      stockfish.postMessage(`position fen ${game.fen()}`);
+      stockfish.postMessage('go depth 12 movetime 400');
+    }
+
+    function requestPlayBestMove() {
+      if (!isHumanTurn() || !stockfish) return;
+      isRequestingAutoMove = true;
+      isEngineThinking = true;
+      $('#engineStatus').text('Calculating best move...');
+
+      stockfish.postMessage('uci');
+      stockfish.postMessage('setoption name UCI_LimitStrength value false');
+      stockfish.postMessage('setoption name Skill Level value 20');
+      stockfish.postMessage(`position fen ${game.fen()}`);
+      stockfish.postMessage('go depth 12 movetime 400');
+    }
+
     function executeMove(moveObj) {
       const isCapture = game.get(moveObj.to) !== null;
       const move = game.move(moveObj);
@@ -689,7 +789,7 @@
     }
 
     function removeHighlights() {
-      $('#board .square-55d63').removeClass('legal-dot legal-capture highlight-selected');
+      $('#board .square-55d63').removeClass('legal-dot legal-capture highlight-selected highlight-hint-from highlight-hint-to');
     }
 
     function highlightLastMove() {
@@ -702,6 +802,7 @@
 
     function showLegalMoves(square) {
       removeHighlights();
+      highlightLastMove();
       selectedSquare = square;
       $(`#board .square-${square}`).addClass('highlight-selected');
 
@@ -737,6 +838,7 @@
       const move = executeMove({ from: source, to: target, promotion: 'q' });
       if (!move) {
         removeHighlights();
+        highlightLastMove();
         selectedSquare = null;
         return 'snapback';
       }
@@ -762,6 +864,7 @@
           const move = executeMove({ from: selectedSquare, to: square, promotion: 'q' });
           if (!move) {
             removeHighlights();
+            highlightLastMove();
             selectedSquare = null;
           }
         }
@@ -836,6 +939,8 @@
       game.reset();
       lastMove = null;
       selectedSquare = null;
+      isRequestingHint = false;
+      isRequestingAutoMove = false;
 
       userColor = $('#sideSelect').val();
       targetElo = parseInt($('#eloSlider').val());
@@ -866,6 +971,8 @@
       initStockfish();
       setupClickHandlers();
 
+      $('#btnHint').click(requestHint);
+      $('#btnPlayBest').click(requestPlayBestMove);
       $('#btnNewGame').click(startNewGame);
       $('#btnUndo').click(() => {
         if (isEngineThinking) return;
