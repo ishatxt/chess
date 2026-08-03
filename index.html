@@ -20,6 +20,7 @@
       --accent-pink: #c27ba0;
       --accent-purple: #9b51e0;
       --accent-blue: #3692e7;
+      --accent-green: #10b981;
       --text-white: #c9d1d9;
       --text-muted: #8b8886;
       --border-dark: #3e3b37;
@@ -70,14 +71,14 @@
     /* Main Container */
     main {
       width: 100%;
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 3rem 0;
     }
 
     /* Mode Selection Grid */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1.5rem;
     }
 
@@ -88,7 +89,6 @@
       padding: 2rem;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       justify-content: space-between;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
@@ -118,6 +118,7 @@
     .card-play:hover::before { background: var(--accent-pink); }
     .card-pgn:hover::before { background: var(--accent-purple); }
     .card-analyze:hover::before { background: var(--accent-blue); }
+    .card-puzzle:hover::before { background: var(--accent-green); }
 
     .card-icon {
       font-size: 2.2rem;
@@ -127,6 +128,7 @@
     .card-play .card-icon { color: var(--accent-pink); }
     .card-pgn .card-icon { color: var(--accent-purple); }
     .card-analyze .card-icon { color: var(--accent-blue); }
+    .card-puzzle .card-icon { color: var(--accent-green); }
 
     .card-title {
       font-size: 1.3rem;
@@ -191,7 +193,7 @@
           <div class="card-title">Paste PGN</div>
           <div class="card-desc">Import game notation from Chess.com or Lichess to inspect player ELOs, titles, and step through moves.</div>
         </div>
-        <div class="card-btn">Open PGN Workspace <i class="fa-solid fa-arrow-right"></i></div>
+        <div class="card-btn">Open Workspace <i class="fa-solid fa-arrow-right"></i></div>
       </a>
 
       <!-- Option 3: Analyze Game -->
@@ -201,7 +203,17 @@
           <div class="card-title">Analyze Game</div>
           <div class="card-desc">Deep position analysis powered by real-time Stockfish engine calculations and win evaluation bars.</div>
         </div>
-        <div class="card-btn">Open Engine Board <i class="fa-solid fa-arrow-right"></i></div>
+        <div class="card-btn">Open Engine <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+
+      <!-- Option 4: Puzzles -->
+      <a href="puzzle.html" class="card card-puzzle" id="btnPuzzle">
+        <div>
+          <div class="card-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+          <div class="card-title">Rated Puzzles</div>
+          <div class="card-desc">Solve real rated tactics fetched dynamically from Lichess's open database filtered by Elo tiers.</div>
+        </div>
+        <div class="card-btn">Solve Puzzles <i class="fa-solid fa-arrow-right"></i></div>
       </a>
 
     </div>

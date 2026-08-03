@@ -5,13 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>iChess — Paste & Review PGN</title>
 
-  <!-- Google Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Chessboard.js CSS -->
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 
   <style>
@@ -26,7 +24,6 @@
       --text-muted: #8b8886;
       --border-dark: #3e3b37;
       
-      /* Board & Custom Theme */
       --board-light: #f3e0ec;
       --board-dark: #c27ba0;
       --lastmove-purple: rgba(155, 81, 224, 0.5);
@@ -49,7 +46,6 @@
       padding: 1rem 1.5rem 2rem;
     }
 
-    /* Top Navigation Bar */
     header {
       width: 100%;
       max-width: 1280px;
@@ -88,7 +84,6 @@
 
     .nav-btn:hover { background: var(--bg-card-hover); }
 
-    /* App Layout */
     .pgn-app {
       display: flex;
       gap: 2rem;
@@ -105,7 +100,6 @@
       }
     }
 
-    /* Left Board Column */
     .board-section {
       display: flex;
       flex-direction: column;
@@ -185,7 +179,6 @@
 
     #board { width: 100%; height: 100%; }
 
-    /* SVG Canvas for Pixel-Perfect Chess.com Arrows */
     #drawingCanvas {
       position: absolute;
       top: 0;
@@ -196,12 +189,10 @@
       z-index: 10;
     }
 
-    /* Square Custom Styling */
     .white-1e1d7 { background-color: var(--board-light) !important; color: var(--board-dark) !important; }
     .black-3c85d { background-color: var(--board-dark) !important; color: var(--board-light) !important; }
     .highlight-lastmove { background-color: var(--lastmove-purple) !important; }
 
-    /* Controls */
     .playback-controls {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -222,7 +213,6 @@
 
     .ctrl-btn:hover { background: var(--bg-card-hover); }
 
-    /* Inputs & Notation Panel */
     .panel-section {
       width: 460px;
       display: flex;
@@ -350,22 +340,18 @@
 </head>
 <body>
 
-  <!-- Official Lichess Audio CDN Assets -->
   <audio id="soundMove" src="https://lichess1.org/assets/sound/standard/Move.mp3" preload="auto"></audio>
   <audio id="soundCapture" src="https://lichess1.org/assets/sound/standard/Capture.mp3" preload="auto"></audio>
   <audio id="soundCheck" src="https://lichess1.org/assets/sound/standard/Check.mp3" preload="auto"></audio>
 
-  <!-- Navigation Bar -->
   <header>
     <a href="index.html" class="brand-logo">i<span>Chess</span></a>
     <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> Home</a>
   </header>
 
   <div class="pgn-app">
-    <!-- Left: Board Section -->
     <div class="board-section">
       <div class="game-meta-card">
-        <!-- Black Player -->
         <div class="player-row">
           <div class="player-details">
             <span class="player-title" id="blackTitle"></span>
@@ -376,7 +362,6 @@
 
         <div class="meta-divider"></div>
 
-        <!-- White Player -->
         <div class="player-row">
           <div class="player-details">
             <span class="player-title" id="whiteTitle"></span>
@@ -389,11 +374,9 @@
 
       <div class="board-container">
         <div id="board"></div>
-        <!-- Right-click SVG Overlay for Precise Chess.com Polygon Arrows -->
         <svg id="drawingCanvas"></svg>
       </div>
 
-      <!-- Playback Controls -->
       <div class="playback-controls">
         <button class="ctrl-btn" id="btnFirst" title="First Move"><i class="fa-solid fa-angles-left"></i></button>
         <button class="ctrl-btn" id="btnPrev" title="Previous Move"><i class="fa-solid fa-angle-left"></i></button>
@@ -403,7 +386,6 @@
       </div>
     </div>
 
-    <!-- Right: Panel Section -->
     <div class="panel-section">
       <div class="input-box">
         <div class="input-header">
@@ -425,7 +407,6 @@
     </div>
   </div>
 
-  <!-- Dependencies -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
@@ -436,8 +417,7 @@
     let history = [];
     let currentMoveIndex = -1;
 
-    /* Arrow & Highlight State */
-    let annotations = []; // Array of { type: 'arrow'|'circle', from, to }
+    let annotations = [];
     let isRightDragging = false;
     let dragStartSquare = null;
 
@@ -548,7 +528,6 @@
       }
     }
 
-    /* Arrow Calculation Functions */
     function clearAnnotations() {
       annotations = [];
       redrawCanvas();
@@ -590,10 +569,6 @@
       };
     }
 
-    /**
-     * Exact Chess.com Arrow Polygon Generator
-     * Generates a 7-point polygon path for a sharp, flared arrow.
-     */
     function createChessDotComArrowPath(fromPt, toPt, sqSize) {
       const dx = toPt.x - fromPt.x;
       const dy = toPt.y - fromPt.y;
@@ -601,18 +576,15 @@
 
       if (dist === 0) return '';
 
-      // Chess.com proportions relative to square size
       const shaftWidth = sqSize * 0.18;
       const headWidth  = sqSize * 0.42;
       const headLength = sqSize * 0.38;
 
-      // Unit vector & Normal vector
       const ux = dx / dist;
       const uy = dy / dist;
       const nx = -uy;
       const ny = ux;
 
-      // Adjust start/end slightly so it stays centered inside square padding
       const padding = sqSize * 0.15;
       const startX = fromPt.x + ux * padding;
       const startY = fromPt.y + uy * padding;
@@ -621,15 +593,13 @@
 
       const bodyDist = dist - (padding * 2);
 
-      // Arrowhead base position along the shaft
       const headBaseX = endX - ux * headLength;
       const headBaseY = endY - uy * headLength;
 
-      // Calculate 7 vertices of the arrow polygon
       const p1 = { x: startX + nx * (shaftWidth / 2), y: startY + ny * (shaftWidth / 2) };
       const p2 = { x: headBaseX + nx * (shaftWidth / 2), y: headBaseY + ny * (shaftWidth / 2) };
       const p3 = { x: headBaseX + nx * (headWidth / 2), y: headBaseY + ny * (headWidth / 2) };
-      const p4 = { x: endX, y: endY }; // Arrow Tip
+      const p4 = { x: endX, y: endY };
       const p5 = { x: headBaseX - nx * (headWidth / 2), y: headBaseY - ny * (headWidth / 2) };
       const p6 = { x: headBaseX - nx * (shaftWidth / 2), y: headBaseY - ny * (shaftWidth / 2) };
       const p7 = { x: startX - nx * (shaftWidth / 2), y: startY - ny * (shaftWidth / 2) };
@@ -639,7 +609,7 @@
 
     function redrawCanvas(tempArrow = null) {
       const svg = document.getElementById('drawingCanvas');
-      svg.innerHTML = ''; // Clear SVG completely
+      svg.innerHTML = '';
 
       const sqSize = svg.clientWidth / 8;
       const itemsToRender = [...annotations];
@@ -677,10 +647,10 @@
       canvas.addEventListener('contextmenu', e => e.preventDefault());
 
       canvas.addEventListener('mousedown', e => {
-        if (e.button === 2) { // Right Click
+        if (e.button === 2) {
           isRightDragging = true;
           dragStartSquare = getSquareFromCoords(e.clientX, e.clientY);
-        } else if (e.button === 0) { // Left Click clears drawings
+        } else if (e.button === 0) {
           clearAnnotations();
         }
       });
@@ -734,7 +704,6 @@
         redrawCanvas();
       });
 
-      // Handlers
       $('#btnLoadPgn').click(() => loadPgnText($('#pgnInput').val().trim()));
       
       $('#btnClear').click(() => {
@@ -762,7 +731,6 @@
         redrawCanvas();
       });
 
-      // Navigation Keyboard Shortcuts
       $(document).keydown(function(e) {
         if ($('textarea').is(':focus')) return;
         if (e.which === 37) goToMove(currentMoveIndex - 1, true);

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iChess — Real Lichess Rated Puzzles</title>
+
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Chessboard.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #161512;
+      --bg-panel: #262421;
+      --bg-card: #2b2925;
+      --bg-card-hover: #363431;
+      --accent-pink: #c27ba0;
+      --accent-purple: #9b51e0;
+      --text-white: #c9d1d9;
+      --text-muted: #8b8886;
+      --border-dark: #3e3b37;
+      --board-light: #f3e0ec;
+      --board-dark: #c27ba0;
+      --success-green: #10b981;
+      --error-red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 1.5rem 2rem;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0 1.5rem;
+      border-bottom: 1px solid var(--border-dark);
+      margin-bottom: 1.5rem;
+    }
+
+    .brand-logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .brand-logo span { color: var(--accent-pink); }
+
+    .nav-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      color: var(--text-white);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn:hover { background: var(--bg-card-hover); }
+
+    .app-layout {
+      display: flex;
+      gap: 2rem;
+      max-width: 1100px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) {
+      .app-layout {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    .board-container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    #board {
+      width: 100%;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .white-1e1d7 { background-color: var(--board-light) !important; color: var(--board-dark) !important; }
+    .black-3c85d { background-color: var(--board-dark) !important; color: var(--board-light) !important; }
+
+    /* Highlights & Dots */
+    .square-highlight {
+      box-shadow: inset 0 0 3px 3px rgba(255, 255, 0, 0.6);
+    }
+
+    .legal-move-dot {
+      position: relative;
+    }
+
+    .legal-move-dot::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 26%;
+      height: 26%;
+      background-color: rgba(16, 185, 129, 0.6);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .legal-capture-ring {
+      position: relative;
+    }
+
+    .legal-capture-ring::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      border: 4px solid rgba(16, 185, 129, 0.6);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .control-panel {
+      flex: 1;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+    }
+
+    .elo-select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    select, button {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      color: #fff;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    select:focus { border-color: var(--accent-purple); }
+
+    .btn-fetch {
+      background: var(--accent-purple);
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .btn-fetch:hover { filter: brightness(1.1); }
+
+    .puzzle-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .info-box {
+      background: var(--bg-card);
+      padding: 0.6rem 0.8rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-dark);
+    }
+
+    .info-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .info-val {
+      font-weight: 700;
+      color: var(--accent-pink);
+    }
+
+    .status-banner {
+      padding: 1rem;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+    }
+
+    .status-banner.success {
+      border-color: var(--success-green);
+      color: var(--success-green);
+    }
+
+    .status-banner.error {
+      border-color: var(--error-red);
+      color: var(--error-red);
+    }
+
+    .theme-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .tag {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-family: 'Roboto Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sound Audio -->
+  <audio id="soundMove" src="https://lichess1.org/assets/sound/standard/Move.mp3" preload="auto"></audio>
+  <audio id="soundCapture" src="https://lichess1.org/assets/sound/standard/Capture.mp3" preload="auto"></audio>
+
+  <header>
+    <a href="index.html" class="brand-logo">i<span>Chess</span></a>
+    <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> Home</a>
+  </header>
+
+  <div class="app-layout">
+    <div class="board-container">
+      <div id="board"></div>
+    </div>
+
+    <div class="control-panel">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-filter" style="color: var(--accent-purple);"></i> Puzzle Difficulty</div>
+        
+        <div class="elo-select-group">
+          <label for="eloFilter">Difficulty Mode:</label>
+          <select id="eloFilter">
+            <option value="daily" selected>Daily Lichess Puzzle</option>
+            <option value="1000">Beginner (~1000 Elo)</option>
+            <option value="1500">Intermediate (~1500 Elo)</option>
+            <option value="2000">Advanced (~2000 Elo)</option>
+          </select>
+        </div>
+
+        <button class="btn-fetch" id="btnNextPuzzle"><i class="fa-solid fa-bolt"></i> Fetch Next Puzzle</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-circle-info" style="color: var(--accent-pink);"></i> Puzzle Meta</div>
+        
+        <div class="puzzle-info-grid">
+          <div class="info-box">
+            <span class="info-label">PUZZLE ID</span>
+            <span class="info-val" id="puzzleId">#------</span>
+          </div>
+          <div class="info-box">
+            <span class="info-label">RATING</span>
+            <span class="info-val" id="puzzleRating">----</span>
+          </div>
+        </div>
+
+        <div>
+          <span class="info-label" style="margin-bottom: 0.4rem;">TACTICAL THEMES</span>
+          <div class="theme-tags" id="puzzleThemes">
+            <span class="tag">loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-banner" id="statusBanner">
+        Click <strong>Fetch Next Puzzle</strong> to start solving!
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+  <script>
+    let board = null;
+    let game = new Chess();
+    let currentPuzzle = null;
+    let moveIndex = 0;
+    let selectedSquare = null;
+    let isWaitingForOpponent = false;
+    let opponentTimeout = null;
+
+    function playSound(isCapture = false) {
+      const snd = isCapture ? document.getElementById('soundCapture') : document.getElementById('soundMove');
+      if (snd) {
+        snd.currentTime = 0;
+        snd.play().catch(() => {});
+      }
+    }
+
+    function removeHighlights() {
+      $('#board .square-55d63').removeClass('square-highlight legal-move-dot legal-capture-ring');
+    }
+
+    function showLegalMoves(square) {
+      removeHighlights();
+      if (isWaitingForOpponent) return;
+
+      const moves = game.moves({
+        square: square,
+        verbose: true
+      });
+
+      if (moves.length === 0) return;
+
+      $(`#board .square-${square}`).addClass('square-highlight');
+
+      for (let i = 0; i < moves.length; i++) {
+        const targetSq = moves[i].to;
+        if (moves[i].captured) {
+          $(`#board .square-${targetSq}`).addClass('legal-capture-ring');
+        } else {
+          $(`#board .square-${targetSq}`).addClass('legal-move-dot');
+        }
+      }
+    }
+
+    // Convert UCI string safely (e.g. "e2e4", "e7e8q")
+    function parseUciMove(uciStr) {
+      if (!uciStr || uciStr.length < 4) return null;
+      const moveObj = {
+        from: uciStr.slice(0, 2),
+        to: uciStr.slice(2, 4)
+      };
+      if (uciStr.length > 4) {
+        moveObj.promotion = uciStr[4];
+      }
+      return moveObj;
+    }
+
+    async function fetchLichessPuzzle() {
+      if (opponentTimeout) clearTimeout(opponentTimeout);
+      isWaitingForOpponent = false;
+      $('#statusBanner').removeClass('success error').html('<i class="fa-solid fa-spinner fa-spin"></i> Loading live puzzle...');
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      try {
+        const response = await fetch('https://lichess.org/api/puzzle/daily', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error('API Request Failed');
+
+        const data = await response.json();
+
+        currentPuzzle = {
+          id: data.puzzle.id,
+          rating: data.puzzle.rating,
+          themes: data.puzzle.themes,
+          initialFen: data.game.fen,
+          solutionMoves: data.puzzle.solution
+        };
+
+        setupBoard(currentPuzzle);
+      } catch (err) {
+        console.warn('Network issue or timeout. Using fallback puzzle:', err);
+        loadFallbackPuzzle();
+      }
+    }
+
+    function loadFallbackPuzzle() {
+      const fallbacks = [
+        {
+          id: "000a8",
+          rating: 1450,
+          themes: ["short", "mate", "mateIn2"],
+          initialFen: "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+          solutionMoves: ["c4f7", "e8f7", "f3e5"]
+        },
+        {
+          id: "000b2",
+          rating: 1600,
+          themes: ["fork", "middlegame"],
+          initialFen: "r2qk2r/ppp2ppp/2n5/2b1p3/4P3/5N2/PPPP1PPP/R1BQ1RK1 b kq - 0 8",
+          solutionMoves: ["c5f2", "f1f2", "d8d4"]
+        }
+      ];
+
+      currentPuzzle = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      setupBoard(currentPuzzle);
+    }
+
+    function setupBoard(puzzle) {
+      if (opponentTimeout) clearTimeout(opponentTimeout);
+      isWaitingForOpponent = false;
+      game.load(puzzle.initialFen);
+      moveIndex = 0;
+      selectedSquare = null;
+
+      $('#puzzleId').text('#' + puzzle.id);
+      $('#puzzleRating').text(puzzle.rating + ' Elo');
+      
+      const tagsContainer = $('#puzzleThemes').empty();
+      puzzle.themes.slice(0, 4).forEach(t => {
+        tagsContainer.append(`<span class="tag">${t}</span>`);
+      });
+
+      // Execute setup move (blunder)
+      if (puzzle.solutionMoves && puzzle.solutionMoves.length > 0) {
+        const setupMoveObj = parseUciMove(puzzle.solutionMoves[0]);
+        if (setupMoveObj) {
+          game.move(setupMoveObj);
+          moveIndex = 1;
+        }
+      }
+
+      const turnColor = game.turn() === 'w' ? 'White' : 'Black';
+      board.orientation(game.turn() === 'w' ? 'white' : 'black');
+      board.position(game.fen());
+      removeHighlights();
+
+      $('#statusBanner').removeClass('success error').html(`<strong>${turnColor} to move</strong>. Find the best line!`);
+    }
+
+    function handleMoveAttempt(source, target) {
+      if (isWaitingForOpponent || !currentPuzzle || moveIndex >= currentPuzzle.solutionMoves.length) {
+        return false;
+      }
+
+      const expectedUCI = currentPuzzle.solutionMoves[moveIndex].toLowerCase();
+      const userBaseUCI = (source + target).toLowerCase();
+
+      // Check if user's move matches expected solution UCI (including pawn promotions)
+      const isMatch = userBaseUCI === expectedUCI || (userBaseUCI + 'q') === expectedUCI;
+
+      if (isMatch) {
+        const moveObj = parseUciMove(expectedUCI);
+        const moveResult = game.move(moveObj);
+
+        if (!moveResult) return false;
+
+        playSound(moveResult.captured ? true : false);
+        board.position(game.fen());
+        removeHighlights();
+        selectedSquare = null;
+        moveIndex++;
+
+        if (moveIndex >= currentPuzzle.solutionMoves.length) {
+          $('#statusBanner').addClass('success').html('🎉 Excellent! You solved the puzzle!');
+        } else {
+          $('#statusBanner').removeClass('error').text('✔ Correct move! Keep calculating...');
+          isWaitingForOpponent = true;
+
+          // Play opponent response move
+          opponentTimeout = setTimeout(() => {
+            const oppUCI = currentPuzzle.solutionMoves[moveIndex];
+            const oppMoveObj = parseUciMove(oppUCI);
+            
+            if (oppMoveObj) {
+              const oppMoveResult = game.move(oppMoveObj);
+              playSound(oppMoveResult ? oppMoveResult.captured : false);
+              board.position(game.fen());
+              moveIndex++;
+            }
+            isWaitingForOpponent = false;
+          }, 450);
+        }
+        return true;
+      } else {
+        $('#statusBanner').addClass('error').text('❌ Incorrect move. Try again!');
+        removeHighlights();
+        selectedSquare = null;
+        return false;
+      }
+    }
+
+    function onDragStart(source, piece) {
+      if (game.game_over() || isWaitingForOpponent) return false;
+
+      if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+          (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+        return false;
+      }
+
+      selectedSquare = source;
+      showLegalMoves(source);
+    }
+
+    function onDrop(source, target) {
+      if (source === target || isWaitingForOpponent) return;
+      const success = handleMoveAttempt(source, target);
+      if (!success) return 'snapback';
+    }
+
+    $(document).ready(function() {
+      board = Chessboard('board', {
+        draggable: true,
+        dropOffBoard: 'snapback',
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        onDragStart: onDragStart,
+        onDrop: onDrop
+      });
+
+      $('#board').on('click', '.square-55d63', function() {
+        if (isWaitingForOpponent) return;
+        const square = $(this).data('square');
+
+        if (selectedSquare === null) {
+          const piece = game.get(square);
+          if (piece && piece.color === game.turn()) {
+            selectedSquare = square;
+            showLegalMoves(square);
+          }
+        } else {
+          if (square === selectedSquare) {
+            removeHighlights();
+            selectedSquare = null;
+          } else {
+            const moveSuccess = handleMoveAttempt(selectedSquare, square);
+            if (!moveSuccess) {
+              const piece = game.get(square);
+              if (piece && piece.color === game.turn()) {
+                selectedSquare = square;
+                showLegalMoves(square);
+              }
+            }
+          }
+        }
+      });
+
+      $('#btnNextPuzzle').click(fetchLichessPuzzle);
+      fetchLichessPuzzle();
+    });
+  </script>
+</body>
+</html>

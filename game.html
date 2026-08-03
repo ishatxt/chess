@@ -5,18 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lichess Engine Clone — Pink Board</title>
 
-  <!-- Google Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Chessboard.js CSS -->
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 
   <style>
     :root {
-      /* Lichess Authentic Dark Palette */
       --bg-dark: #161512;
       --bg-panel: #262421;
       --bg-card: #2b2925;
@@ -26,9 +23,8 @@
       --text-muted: #8b8886;
       --border-dark: #3e3b37;
       
-      /* Pink Board Palette */
-      --board-light: #f3e0ec; /* Soft pale pink */
-      --board-dark: #c27ba0;  /* Rose / Magenta pink */
+      --board-light: #f3e0ec;
+      --board-dark: #c27ba0;
       --highlight-selected: rgba(220, 100, 160, 0.5);
       --lastmove-yellow: rgba(155, 81, 224, 0.5);
     }
@@ -50,8 +46,6 @@
       align-items: center;
       padding: 1.5rem;
     }
-
-    /* Layout Wrapper */
     .chess-app {
       display: flex;
       gap: 2rem;
@@ -68,7 +62,6 @@
       }
     }
 
-    /* Board Container Section */
     .board-container {
       display: flex;
       flex-direction: column;
@@ -117,7 +110,6 @@
       min-height: 20px;
     }
 
-    /* Board & Eval Layout */
     .board-layout {
       display: flex;
       gap: 8px;
@@ -125,7 +117,6 @@
       width: 100%;
     }
 
-    /* Lichess Vertical Eval Gauge */
     .eval-wrapper {
       width: 16px;
       background: #403d39;
@@ -154,7 +145,6 @@
       z-index: 2;
     }
 
-    /* Board Outer Frame */
     .board-frame {
       flex: 1;
       aspect-ratio: 1;
@@ -169,7 +159,6 @@
       height: 100%;
     }
 
-    /* Pink Board Square Overrides */
     .white-1e1d7 {
       background-color: var(--board-light) !important;
       color: var(--board-dark) !important;
@@ -179,7 +168,6 @@
       color: var(--board-light) !important;
     }
 
-    /* Square Overlays & Highlights */
     .square-55d63 {
       position: relative;
     }
@@ -192,7 +180,6 @@
       background-color: var(--lastmove-yellow) !important;
     }
 
-    /* Legal Move Target Dot */
     .legal-dot::after {
       content: '';
       position: absolute;
@@ -207,7 +194,6 @@
       z-index: 5;
     }
 
-    /* Legal Capture Ring */
     .legal-capture::after {
       content: '';
       position: absolute;
@@ -222,7 +208,6 @@
       z-index: 5;
     }
 
-    /* Right Control Sidebar */
     .sidebar {
       width: 380px;
       background-color: var(--bg-panel);
@@ -242,7 +227,6 @@
       }
     }
 
-    /* Status Alert Banner */
     .status-alert {
       padding: 0.8rem 1rem;
       background-color: var(--bg-card);
@@ -260,7 +244,6 @@
       color: var(--accent);
     }
 
-    /* Notation Log Table */
     .notation-container {
       flex: 1;
       overflow-y: auto;
@@ -303,7 +286,6 @@
       background: var(--bg-card-hover);
     }
 
-    /* Controls */
     .control-panel {
       padding: 1rem;
       background-color: var(--bg-panel);
@@ -383,9 +365,7 @@
 <body>
 
   <div class="chess-app">
-    <!-- Board Section -->
     <div class="board-container">
-      <!-- Opponent Player Info -->
       <div class="player-banner">
         <div class="player-details">
           <div class="player-avatar"><i class="fa-solid fa-laptop-code"></i></div>
@@ -397,7 +377,6 @@
         <div class="captured-area" id="topCaptured"></div>
       </div>
 
-      <!-- Chessboard Layout with Eval Gauge -->
       <div class="board-layout">
         <div class="eval-wrapper" title="Engine Evaluation">
           <div class="eval-text" id="evalText">0.0</div>
@@ -408,7 +387,6 @@
         </div>
       </div>
 
-      <!-- User Player Info -->
       <div class="player-banner">
         <div class="player-details">
           <div class="player-avatar"><i class="fa-solid fa-user"></i></div>
@@ -421,21 +399,17 @@
       </div>
     </div>
 
-    <!-- Sidebar Panel -->
     <aside class="sidebar">
-      <!-- Status Banner -->
       <div class="status-alert" id="statusBanner">
         <i class="fa-solid fa-circle-play"></i> White to move
       </div>
 
-      <!-- Move History -->
       <div class="notation-container">
         <table class="notation-table">
           <tbody id="moveLog"></tbody>
         </table>
       </div>
 
-      <!-- Match Controls -->
       <div class="control-panel">
         <div class="setting-group">
           <label for="sideSelect">Play As</label>
@@ -464,15 +438,11 @@
     </aside>
   </div>
 
-  <!-- Dependencies -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
   <script>
-    /**
-     * Official Lichess Sound Engine
-     */
     class SoundEngine {
       constructor() {
         this.sounds = {
@@ -497,7 +467,6 @@
 
     const sounds = new SoundEngine();
 
-    // App State
     let board = null;
     let game = new Chess();
     let stockfish = null;
@@ -509,7 +478,6 @@
 
     const pieceSymbols = { p: '♟', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚' };
 
-    // Stockfish Engine Setup
     function initStockfish() {
       const sfUrl = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js';
       $('#engineStatus').text('Loading engine...');
@@ -662,13 +630,11 @@
         const square = $(this).attr('data-square');
         const piece = game.get(square);
 
-        // Click 1: Select own piece
         if (piece && ((userColor === 'white' && piece.color === 'w') || (userColor === 'black' && piece.color === 'b'))) {
           showLegalMoves(square);
           return;
         }
 
-        // Click 2: Move to destination square
         if (selectedSquare) {
           const move = executeMove({ from: selectedSquare, to: square, promotion: 'q' });
           if (!move) {
