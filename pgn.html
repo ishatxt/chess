@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iChess — Paste & Review PGN</title>
+
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Chessboard.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #161512;
+      --bg-panel: #262421;
+      --bg-card: #2b2925;
+      --bg-card-hover: #363431;
+      --accent-pink: #c27ba0;
+      --accent-purple: #9b51e0;
+      --text-white: #c9d1d9;
+      --text-muted: #8b8886;
+      --border-dark: #3e3b37;
+      
+      /* Board & Custom Theme */
+      --board-light: #f3e0ec;
+      --board-dark: #c27ba0;
+      --lastmove-purple: rgba(155, 81, 224, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem 1.5rem 2rem;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      width: 100%;
+      max-width: 1280px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0 1.5rem;
+      border-bottom: 1px solid var(--border-dark);
+      margin-bottom: 1.5rem;
+    }
+
+    .brand-logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .brand-logo span { color: var(--accent-pink); }
+
+    .nav-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      color: var(--text-white);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .nav-btn:hover { background: var(--bg-card-hover); }
+
+    /* App Layout */
+    .pgn-app {
+      display: flex;
+      gap: 2rem;
+      max-width: 1280px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 1024px) {
+      .pgn-app {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    /* Left Board Column */
+    .board-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .game-meta-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      padding: 0.8rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .player-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .player-details {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .player-title {
+      background: #d5a6bd;
+      color: #161512;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.1rem 0.38rem;
+      border-radius: 2px;
+      display: none;
+    }
+
+    .player-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    .player-elo {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .meta-divider {
+      height: 1px;
+      background: var(--border-dark);
+      margin: 0.2rem 0;
+    }
+
+    .game-result {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+      background: var(--bg-card);
+      padding: 0.2rem 0.6rem;
+      border-radius: 3px;
+      color: var(--accent-pink);
+    }
+
+    .board-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      user-select: none;
+    }
+
+    #board { width: 100%; height: 100%; }
+
+    /* SVG Canvas for Pixel-Perfect Chess.com Arrows */
+    #drawingCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* Square Custom Styling */
+    .white-1e1d7 { background-color: var(--board-light) !important; color: var(--board-dark) !important; }
+    .black-3c85d { background-color: var(--board-dark) !important; color: var(--board-light) !important; }
+    .highlight-lastmove { background-color: var(--lastmove-purple) !important; }
+
+    /* Controls */
+    .playback-controls {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .ctrl-btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      color: var(--text-white);
+      padding: 0.6rem;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.15s ease;
+    }
+
+    .ctrl-btn:hover { background: var(--bg-card-hover); }
+
+    /* Inputs & Notation Panel */
+    .panel-section {
+      width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+      .panel-section { width: 100%; max-width: 520px; }
+    }
+
+    .input-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .input-header {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      color: #fff;
+      padding: 0.8rem;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.82rem;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus { border-color: var(--accent-purple); }
+
+    .action-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--accent-purple);
+      color: #fff;
+      border: none;
+      padding: 0.6rem;
+      font-weight: 700;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      color: var(--text-white);
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover { background: var(--bg-card-hover); }
+
+    .moves-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      height: 280px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .moves-header {
+      padding: 0.8rem 1rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .moves-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 0.3rem 0.6rem;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.88rem;
+    }
+
+    .move-step {
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .move-num { color: var(--text-muted); }
+
+    .move-step:hover { background: var(--bg-card-hover); color: #fff; }
+
+    .move-step.active {
+      background: var(--accent-purple);
+      color: #fff;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Official Lichess Audio CDN Assets -->
+  <audio id="soundMove" src="https://lichess1.org/assets/sound/standard/Move.mp3" preload="auto"></audio>
+  <audio id="soundCapture" src="https://lichess1.org/assets/sound/standard/Capture.mp3" preload="auto"></audio>
+  <audio id="soundCheck" src="https://lichess1.org/assets/sound/standard/Check.mp3" preload="auto"></audio>
+
+  <!-- Navigation Bar -->
+  <header>
+    <a href="index.html" class="brand-logo">i<span>Chess</span></a>
+    <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> Home</a>
+  </header>
+
+  <div class="pgn-app">
+    <!-- Left: Board Section -->
+    <div class="board-section">
+      <div class="game-meta-card">
+        <!-- Black Player -->
+        <div class="player-row">
+          <div class="player-details">
+            <span class="player-title" id="blackTitle"></span>
+            <span class="player-name" id="blackPlayer">Black Player</span>
+            <span class="player-elo" id="blackElo"></span>
+          </div>
+        </div>
+
+        <div class="meta-divider"></div>
+
+        <!-- White Player -->
+        <div class="player-row">
+          <div class="player-details">
+            <span class="player-title" id="whiteTitle"></span>
+            <span class="player-name" id="whitePlayer">White Player</span>
+            <span class="player-elo" id="whiteElo"></span>
+          </div>
+          <div class="game-result" id="gameResult">*</div>
+        </div>
+      </div>
+
+      <div class="board-container">
+        <div id="board"></div>
+        <!-- Right-click SVG Overlay for Precise Chess.com Polygon Arrows -->
+        <svg id="drawingCanvas"></svg>
+      </div>
+
+      <!-- Playback Controls -->
+      <div class="playback-controls">
+        <button class="ctrl-btn" id="btnFirst" title="First Move"><i class="fa-solid fa-angles-left"></i></button>
+        <button class="ctrl-btn" id="btnPrev" title="Previous Move"><i class="fa-solid fa-angle-left"></i></button>
+        <button class="ctrl-btn" id="btnNext" title="Next Move"><i class="fa-solid fa-angle-right"></i></button>
+        <button class="ctrl-btn" id="btnLast" title="Last Move"><i class="fa-solid fa-angles-right"></i></button>
+        <button class="ctrl-btn" id="btnFlip" title="Flip Board"><i class="fa-solid fa-retweet"></i></button>
+      </div>
+    </div>
+
+    <!-- Right: Panel Section -->
+    <div class="panel-section">
+      <div class="input-box">
+        <div class="input-header">
+          <i class="fa-solid fa-file-code" style="color: var(--accent-purple);"></i> Paste PGN Code
+        </div>
+        <textarea id="pgnInput" placeholder="Paste game PGN here from Chess.com or Lichess..."></textarea>
+        <div class="action-row">
+          <button class="btn-primary" id="btnLoadPgn">Load Game</button>
+          <button class="btn-secondary" id="btnClear">Clear</button>
+        </div>
+      </div>
+
+      <div class="moves-card">
+        <div class="moves-header">MOVE LOG</div>
+        <div class="moves-tree" id="movesTree">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">Paste PGN above and click Load Game.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependencies -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+  <script>
+    let board = null;
+    let game = new Chess();
+    let history = [];
+    let currentMoveIndex = -1;
+
+    /* Arrow & Highlight State */
+    let annotations = []; // Array of { type: 'arrow'|'circle', from, to }
+    let isRightDragging = false;
+    let dragStartSquare = null;
+
+    function playLichessSound(move) {
+      if (!move) return;
+
+      const soundMove = document.getElementById('soundMove');
+      const soundCapture = document.getElementById('soundCapture');
+      const soundCheck = document.getElementById('soundCheck');
+
+      [soundMove, soundCapture, soundCheck].forEach(s => {
+        if (s) {
+          s.pause();
+          s.currentTime = 0;
+        }
+      });
+
+      if (move.san.includes('+') || move.san.includes('#')) {
+        soundCheck.play().catch(() => {});
+      } else if (move.captured || move.san.includes('x')) {
+        soundCapture.play().catch(() => {});
+      } else {
+        soundMove.play().catch(() => {});
+      }
+    }
+
+    function loadPgnText(pgnText) {
+      if (!pgnText) {
+        alert('Please paste a PGN string first.');
+        return;
+      }
+
+      game.reset();
+      if (!game.load_pgn(pgnText)) {
+        alert('Invalid PGN format. Please check the text and try again.');
+        return;
+      }
+
+      history = game.history({ verbose: true });
+      updateMeta();
+      renderMoveTree();
+      goToMove(history.length - 1, false);
+    }
+
+    function updateMeta() {
+      const h = game.header();
+
+      $('#whitePlayer').text(h.White || 'White Player');
+      $('#whiteElo').text(h.WhiteElo ? `(${h.WhiteElo})` : '');
+      h.WhiteTitle ? $('#whiteTitle').text(h.WhiteTitle).show() : $('#whiteTitle').hide();
+
+      $('#blackPlayer').text(h.Black || 'Black Player');
+      $('#blackElo').text(h.BlackElo ? `(${h.BlackElo})` : '');
+      h.BlackTitle ? $('#blackTitle').text(h.BlackTitle).show() : $('#blackTitle').hide();
+
+      $('#gameResult').text(h.Result || '*');
+    }
+
+    function renderMoveTree() {
+      const container = $('#movesTree').empty();
+
+      if (history.length === 0) {
+        container.html('<span style="color: var(--text-muted); font-size: 0.85rem;">No moves found.</span>');
+        return;
+      }
+
+      for (let i = 0; i < history.length; i++) {
+        if (i % 2 === 0) {
+          const moveNum = Math.floor(i / 2) + 1;
+          container.append(`<span class="move-num">${moveNum}.</span>`);
+        }
+
+        const stepEl = $(`<span class="move-step" data-index="${i}">${history[i].san}</span>`);
+        stepEl.click(function() {
+          goToMove(parseInt($(this).attr('data-index')), true);
+        });
+
+        container.append(stepEl);
+      }
+    }
+
+    function goToMove(index, playAudio = true) {
+      if (history.length === 0) return;
+      
+      clearAnnotations();
+      const prevIndex = currentMoveIndex;
+      currentMoveIndex = Math.max(-1, Math.min(index, history.length - 1));
+
+      const tempGame = new Chess();
+      for (let i = 0; i <= currentMoveIndex; i++) {
+        tempGame.move(history[i]);
+      }
+
+      board.position(tempGame.fen());
+
+      $('.move-step').removeClass('active');
+      $('#board .square-55d63').removeClass('highlight-lastmove');
+
+      if (currentMoveIndex >= 0) {
+        $(`.move-step[data-index="${currentMoveIndex}"]`).addClass('active');
+        const lastMove = history[currentMoveIndex];
+        $(`#board .square-${lastMove.from}`).addClass('highlight-lastmove');
+        $(`#board .square-${lastMove.to}`).addClass('highlight-lastmove');
+
+        if (playAudio && currentMoveIndex !== prevIndex) {
+          playLichessSound(lastMove);
+        }
+      }
+    }
+
+    /* Arrow Calculation Functions */
+    function clearAnnotations() {
+      annotations = [];
+      redrawCanvas();
+    }
+
+    function getSquareFromCoords(x, y) {
+      const boardEl = document.getElementById('board');
+      const rect = boardEl.getBoundingClientRect();
+      const isFlipped = board.orientation() === 'black';
+
+      const fileIdx = Math.floor(((x - rect.left) / rect.width) * 8);
+      const rankIdx = Math.floor(((y - rect.top) / rect.height) * 8);
+
+      if (fileIdx < 0 || fileIdx > 7 || rankIdx < 0 || rankIdx > 7) return null;
+
+      const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+      const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+
+      const file = isFlipped ? files[7 - fileIdx] : files[fileIdx];
+      const rank = isFlipped ? ranks[7 - rankIdx] : ranks[rankIdx];
+
+      return file + rank;
+    }
+
+    function getSquareCenter(sq) {
+      const file = sq.charCodeAt(0) - 97;
+      const rank = 8 - parseInt(sq[1], 10);
+      const isFlipped = board.orientation() === 'black';
+
+      const actualFile = isFlipped ? 7 - file : file;
+      const actualRank = isFlipped ? 7 - rank : rank;
+
+      const boardSize = document.getElementById('board').clientWidth;
+      const sqSize = boardSize / 8;
+
+      return {
+        x: actualFile * sqSize + sqSize / 2,
+        y: actualRank * sqSize + sqSize / 2
+      };
+    }
+
+    /**
+     * Exact Chess.com Arrow Polygon Generator
+     * Generates a 7-point polygon path for a sharp, flared arrow.
+     */
+    function createChessDotComArrowPath(fromPt, toPt, sqSize) {
+      const dx = toPt.x - fromPt.x;
+      const dy = toPt.y - fromPt.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist === 0) return '';
+
+      // Chess.com proportions relative to square size
+      const shaftWidth = sqSize * 0.18;
+      const headWidth  = sqSize * 0.42;
+      const headLength = sqSize * 0.38;
+
+      // Unit vector & Normal vector
+      const ux = dx / dist;
+      const uy = dy / dist;
+      const nx = -uy;
+      const ny = ux;
+
+      // Adjust start/end slightly so it stays centered inside square padding
+      const padding = sqSize * 0.15;
+      const startX = fromPt.x + ux * padding;
+      const startY = fromPt.y + uy * padding;
+      const endX = toPt.x - ux * padding;
+      const endY = toPt.y - uy * padding;
+
+      const bodyDist = dist - (padding * 2);
+
+      // Arrowhead base position along the shaft
+      const headBaseX = endX - ux * headLength;
+      const headBaseY = endY - uy * headLength;
+
+      // Calculate 7 vertices of the arrow polygon
+      const p1 = { x: startX + nx * (shaftWidth / 2), y: startY + ny * (shaftWidth / 2) };
+      const p2 = { x: headBaseX + nx * (shaftWidth / 2), y: headBaseY + ny * (shaftWidth / 2) };
+      const p3 = { x: headBaseX + nx * (headWidth / 2), y: headBaseY + ny * (headWidth / 2) };
+      const p4 = { x: endX, y: endY }; // Arrow Tip
+      const p5 = { x: headBaseX - nx * (headWidth / 2), y: headBaseY - ny * (headWidth / 2) };
+      const p6 = { x: headBaseX - nx * (shaftWidth / 2), y: headBaseY - ny * (shaftWidth / 2) };
+      const p7 = { x: startX - nx * (shaftWidth / 2), y: startY - ny * (shaftWidth / 2) };
+
+      return `M ${p1.x},${p1.y} L ${p2.x},${p2.y} L ${p3.x},${p3.y} L ${p4.x},${p4.y} L ${p5.x},${p5.y} L ${p6.x},${p6.y} L ${p7.x},${p7.y} Z`;
+    }
+
+    function redrawCanvas(tempArrow = null) {
+      const svg = document.getElementById('drawingCanvas');
+      svg.innerHTML = ''; // Clear SVG completely
+
+      const sqSize = svg.clientWidth / 8;
+      const itemsToRender = [...annotations];
+      if (tempArrow) itemsToRender.push(tempArrow);
+
+      itemsToRender.forEach(item => {
+        if (item.type === 'circle') {
+          const pt = getSquareCenter(item.from);
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', pt.x);
+          circle.setAttribute('cy', pt.y);
+          circle.setAttribute('r', sqSize * 0.42);
+          circle.setAttribute('fill', 'none');
+          circle.setAttribute('stroke', 'rgba(224, 141, 172, 0.85)');
+          circle.setAttribute('stroke-width', sqSize * 0.08);
+          svg.appendChild(circle);
+        } else if (item.type === 'arrow') {
+          const startPt = getSquareCenter(item.from);
+          const endPt = getSquareCenter(item.to);
+
+          const pathData = createChessDotComArrowPath(startPt, endPt, sqSize);
+          if (pathData) {
+            const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            arrowPath.setAttribute('d', pathData);
+            arrowPath.setAttribute('fill', 'rgba(224, 141, 172, 0.85)');
+            svg.appendChild(arrowPath);
+          }
+        }
+      });
+    }
+
+    function initDrawingEvents() {
+      const canvas = document.getElementById('drawingCanvas');
+
+      canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+      canvas.addEventListener('mousedown', e => {
+        if (e.button === 2) { // Right Click
+          isRightDragging = true;
+          dragStartSquare = getSquareFromCoords(e.clientX, e.clientY);
+        } else if (e.button === 0) { // Left Click clears drawings
+          clearAnnotations();
+        }
+      });
+
+      canvas.addEventListener('mousemove', e => {
+        if (!isRightDragging || !dragStartSquare) return;
+        const currentSq = getSquareFromCoords(e.clientX, e.clientY);
+        if (currentSq && currentSq !== dragStartSquare) {
+          redrawCanvas({ type: 'arrow', from: dragStartSquare, to: currentSq });
+        }
+      });
+
+      canvas.addEventListener('mouseup', e => {
+        if (e.button === 2 && isRightDragging) {
+          isRightDragging = false;
+          const dragEndSquare = getSquareFromCoords(e.clientX, e.clientY);
+
+          if (dragStartSquare && dragEndSquare) {
+            if (dragStartSquare === dragEndSquare) {
+              const idx = annotations.findIndex(a => a.type === 'circle' && a.from === dragStartSquare);
+              if (idx >= 0) {
+                annotations.splice(idx, 1);
+              } else {
+                annotations.push({ type: 'circle', from: dragStartSquare });
+              }
+            } else {
+              const idx = annotations.findIndex(a => a.type === 'arrow' && a.from === dragStartSquare && a.to === dragEndSquare);
+              if (idx >= 0) {
+                annotations.splice(idx, 1);
+              } else {
+                annotations.push({ type: 'arrow', from: dragStartSquare, to: dragEndSquare });
+              }
+            }
+          }
+          dragStartSquare = null;
+          redrawCanvas();
+        }
+      });
+    }
+
+    $(document).ready(function() {
+      board = Chessboard('board', {
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+      });
+
+      initDrawingEvents();
+
+      $(window).resize(() => {
+        board.resize();
+        redrawCanvas();
+      });
+
+      // Handlers
+      $('#btnLoadPgn').click(() => loadPgnText($('#pgnInput').val().trim()));
+      
+      $('#btnClear').click(() => {
+        $('#pgnInput').val('');
+        game.reset();
+        history = [];
+        board.position('start');
+        clearAnnotations();
+        renderMoveTree();
+        $('#whitePlayer').text('White Player');
+        $('#whiteElo').text('');
+        $('#whiteTitle').hide();
+        $('#blackPlayer').text('Black Player');
+        $('#blackElo').text('');
+        $('#blackTitle').hide();
+        $('#gameResult').text('*');
+      });
+
+      $('#btnFirst').click(() => goToMove(-1, true));
+      $('#btnPrev').click(() => goToMove(currentMoveIndex - 1, true));
+      $('#btnNext').click(() => goToMove(currentMoveIndex + 1, true));
+      $('#btnLast').click(() => goToMove(history.length - 1, true));
+      $('#btnFlip').click(() => {
+        board.flip();
+        redrawCanvas();
+      });
+
+      // Navigation Keyboard Shortcuts
+      $(document).keydown(function(e) {
+        if ($('textarea').is(':focus')) return;
+        if (e.which === 37) goToMove(currentMoveIndex - 1, true);
+        if (e.which === 39) goToMove(currentMoveIndex + 1, true);
+      });
+    });
+  </script>
+</body>
+</html>

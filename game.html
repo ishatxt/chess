@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lichess Engine Clone — Pink Board</title>
+
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Chessboard.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+
+  <style>
+    :root {
+      /* Lichess Authentic Dark Palette */
+      --bg-dark: #161512;
+      --bg-panel: #262421;
+      --bg-card: #2b2925;
+      --bg-card-hover: #363431;
+      --accent: #3692e7;
+      --text-white: #c9d1d9;
+      --text-muted: #8b8886;
+      --border-dark: #3e3b37;
+      
+      /* Pink Board Palette */
+      --board-light: #f3e0ec; /* Soft pale pink */
+      --board-dark: #c27ba0;  /* Rose / Magenta pink */
+      --highlight-selected: rgba(220, 100, 160, 0.5);
+      --lastmove-yellow: rgba(155, 81, 224, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans', system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    /* Layout Wrapper */
+    .chess-app {
+      display: flex;
+      gap: 2rem;
+      max-width: 1280px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 1024px) {
+      .chess-app {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    /* Board Container Section */
+    .board-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .player-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2rem 0;
+      background: transparent;
+    }
+
+    .player-details {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .player-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-card);
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .player-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+
+    .captured-area {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      letter-spacing: -1px;
+      min-height: 20px;
+    }
+
+    /* Board & Eval Layout */
+    .board-layout {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    /* Lichess Vertical Eval Gauge */
+    .eval-wrapper {
+      width: 16px;
+      background: #403d39;
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column-reverse;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .eval-fill {
+      width: 100%;
+      height: 50%;
+      background: #fff;
+      transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .eval-text {
+      position: absolute;
+      top: 4px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #000;
+      z-index: 2;
+    }
+
+    /* Board Outer Frame */
+    .board-frame {
+      flex: 1;
+      aspect-ratio: 1;
+      border-radius: 3px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    #board {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Pink Board Square Overrides */
+    .white-1e1d7 {
+      background-color: var(--board-light) !important;
+      color: var(--board-dark) !important;
+    }
+    .black-3c85d {
+      background-color: var(--board-dark) !important;
+      color: var(--board-light) !important;
+    }
+
+    /* Square Overlays & Highlights */
+    .square-55d63 {
+      position: relative;
+    }
+
+    .highlight-selected {
+      background-color: var(--highlight-selected) !important;
+    }
+
+    .highlight-lastmove {
+      background-color: var(--lastmove-yellow) !important;
+    }
+
+    /* Legal Move Target Dot */
+    .legal-dot::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 25%;
+      height: 25%;
+      background-color: rgba(0, 0, 0, 0.25);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Legal Capture Ring */
+    .legal-capture::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 6px solid rgba(0, 0, 0, 0.25);
+      box-sizing: border-box;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Right Control Sidebar */
+    .sidebar {
+      width: 380px;
+      background-color: var(--bg-panel);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 100%;
+        max-width: 600px;
+        height: auto;
+      }
+    }
+
+    /* Status Alert Banner */
+    .status-alert {
+      padding: 0.8rem 1rem;
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-dark);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-white);
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-alert i {
+      color: var(--accent);
+    }
+
+    /* Notation Log Table */
+    .notation-container {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 180px;
+      background: var(--bg-panel);
+    }
+
+    .notation-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Noto Sans', sans-serif;
+      font-size: 0.9rem;
+    }
+
+    .notation-table td {
+      padding: 0.4rem 0.8rem;
+      border-bottom: 1px solid #302e2c;
+    }
+
+    .notation-table tr:nth-child(even) {
+      background-color: var(--bg-card);
+    }
+
+    .move-num {
+      color: var(--text-muted);
+      width: 20%;
+      background: #201e1b;
+      border-bottom: 1px solid #282623 !important;
+      text-align: center;
+    }
+
+    .move-white, .move-black {
+      width: 40%;
+      font-weight: 600;
+      color: #d1d5d8;
+      cursor: pointer;
+    }
+
+    .move-white:hover, .move-black:hover {
+      background: var(--bg-card-hover);
+    }
+
+    /* Controls */
+    .control-panel {
+      padding: 1rem;
+      background-color: var(--bg-panel);
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .setting-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .setting-group label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    select {
+      background-color: var(--bg-card);
+      color: var(--text-white);
+      border: 1px solid var(--border-dark);
+      padding: 0.4rem 0.6rem;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      outline: none;
+      font-weight: 600;
+      flex: 1;
+      max-width: 200px;
+    }
+
+    select:hover {
+      background-color: var(--bg-card-hover);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-action {
+      background-color: var(--bg-card);
+      color: var(--text-white);
+      border: 1px solid var(--border-dark);
+      padding: 0.7rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.1s ease;
+    }
+
+    .btn-action:hover {
+      background-color: var(--bg-card-hover);
+      color: #fff;
+    }
+
+    .btn-action:active {
+      background-color: #403d39;
+    }
+
+    .btn-primary {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chess-app">
+    <!-- Board Section -->
+    <div class="board-container">
+      <!-- Opponent Player Info -->
+      <div class="player-banner">
+        <div class="player-details">
+          <div class="player-avatar"><i class="fa-solid fa-laptop-code"></i></div>
+          <div>
+            <div class="player-name" id="topPlayerName">Stockfish Engine</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);" id="engineStatus">Ready</div>
+          </div>
+        </div>
+        <div class="captured-area" id="topCaptured"></div>
+      </div>
+
+      <!-- Chessboard Layout with Eval Gauge -->
+      <div class="board-layout">
+        <div class="eval-wrapper" title="Engine Evaluation">
+          <div class="eval-text" id="evalText">0.0</div>
+          <div class="eval-fill" id="evalFill"></div>
+        </div>
+        <div class="board-frame">
+          <div id="board"></div>
+        </div>
+      </div>
+
+      <!-- User Player Info -->
+      <div class="player-banner">
+        <div class="player-details">
+          <div class="player-avatar"><i class="fa-solid fa-user"></i></div>
+          <div>
+            <div class="player-name" id="bottomPlayerName">Anonymous</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Human</div>
+          </div>
+        </div>
+        <div class="captured-area" id="bottomCaptured"></div>
+      </div>
+    </div>
+
+    <!-- Sidebar Panel -->
+    <aside class="sidebar">
+      <!-- Status Banner -->
+      <div class="status-alert" id="statusBanner">
+        <i class="fa-solid fa-circle-play"></i> White to move
+      </div>
+
+      <!-- Move History -->
+      <div class="notation-container">
+        <table class="notation-table">
+          <tbody id="moveLog"></tbody>
+        </table>
+      </div>
+
+      <!-- Match Controls -->
+      <div class="control-panel">
+        <div class="setting-group">
+          <label for="sideSelect">Play As</label>
+          <select id="sideSelect">
+            <option value="white" selected>White</option>
+            <option value="black">Black</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label for="depthSelect">Engine Level</label>
+          <select id="depthSelect">
+            <option value="1">Level 1 (Depth 1)</option>
+            <option value="4" selected>Level 4 (Depth 4)</option>
+            <option value="10">Level 8 (Depth 10)</option>
+            <option value="15">Stockfish 16 (Depth 15)</option>
+          </select>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-action btn-primary" id="btnNewGame"><i class="fa-solid fa-plus"></i> Create a game</button>
+          <button class="btn-action" id="btnUndo"><i class="fa-solid fa-backward-step"></i> Undo</button>
+          <button class="btn-action" id="btnFlip"><i class="fa-solid fa-retweet"></i> Flip</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Dependencies -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+  <script>
+    /**
+     * Official Lichess Sound Engine
+     */
+    class SoundEngine {
+      constructor() {
+        this.sounds = {
+          move: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Move.mp3'),
+          capture: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Capture.mp3'),
+          check: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Check.mp3')
+        };
+
+        Object.values(this.sounds).forEach(audio => {
+          audio.preload = 'auto';
+        });
+      }
+
+      play(type) {
+        const sound = this.sounds[type];
+        if (sound) {
+          sound.currentTime = 0;
+          sound.play().catch(() => {});
+        }
+      }
+    }
+
+    const sounds = new SoundEngine();
+
+    // App State
+    let board = null;
+    let game = new Chess();
+    let stockfish = null;
+    let userColor = 'white';
+    let engineDepth = 4;
+    let selectedSquare = null;
+    let lastMove = null;
+    let isEngineThinking = false;
+
+    const pieceSymbols = { p: '♟', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚' };
+
+    // Stockfish Engine Setup
+    function initStockfish() {
+      const sfUrl = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js';
+      $('#engineStatus').text('Loading engine...');
+
+      fetch(sfUrl)
+        .then(r => r.text())
+        .then(code => {
+          const blob = new Blob([code], { type: 'application/javascript' });
+          stockfish = new Worker(URL.createObjectURL(blob));
+          stockfish.onmessage = handleEngineMessage;
+          stockfish.postMessage('uci');
+          stockfish.postMessage('isready');
+          $('#engineStatus').text('Ready');
+        });
+    }
+
+    function handleEngineMessage(e) {
+      const line = e.data;
+
+      if (line.includes('score cp')) {
+        const cpMatch = line.match(/score cp (-?\d+)/);
+        if (cpMatch) {
+          let cp = parseInt(cpMatch[1]);
+          if (game.turn() === 'b') cp = -cp;
+          
+          const scoreStr = (cp / 100).toFixed(1);
+          const displayScore = scoreStr > 0 ? `+${scoreStr}` : scoreStr;
+          
+          const percent = Math.max(5, Math.min(95, 50 + (cp / 15)));
+          
+          $('#evalFill').css('height', `${percent}%`);
+          
+          if(percent > 80) {
+              $('#evalText').css('color', '#000');
+          } else if (percent < 20) {
+              $('#evalText').css('color', '#fff');
+          } else {
+              $('#evalText').css('color', '#000');
+          }
+          
+          $('#evalText').text(displayScore);
+        }
+      }
+
+      if (line.startsWith('bestmove')) {
+        const moveMatch = line.match(/^bestmove\s([a-h][1-8][a-h][1-8][qrbn]?)/);
+        if (moveMatch) {
+          const mStr = moveMatch[1];
+          executeMove({
+            from: mStr.substring(0, 2),
+            to: mStr.substring(2, 4),
+            promotion: mStr.length === 5 ? mStr[4] : 'q'
+          });
+        }
+        isEngineThinking = false;
+        $('#engineStatus').text('Ready');
+      }
+    }
+
+    function triggerEngine() {
+      if (!stockfish || game.game_over() || isEngineThinking) return;
+      isEngineThinking = true;
+      $('#engineStatus').text('Calculating...');
+      stockfish.postMessage(`position fen ${game.fen()}`);
+      stockfish.postMessage(`go depth ${engineDepth}`);
+    }
+
+    function executeMove(moveObj) {
+      const isCapture = game.get(moveObj.to) !== null;
+      const move = game.move(moveObj);
+      if (!move) return null;
+
+      lastMove = { from: move.from, to: move.to };
+      selectedSquare = null;
+      removeHighlights();
+
+      board.position(game.fen());
+      highlightLastMove();
+
+      if (game.in_check()) sounds.play('check');
+      else if (isCapture) sounds.play('capture');
+      else sounds.play('move');
+
+      updateUI();
+      return move;
+    }
+
+    function removeHighlights() {
+      $('#board .square-55d63').removeClass('legal-dot legal-capture highlight-selected');
+    }
+
+    function highlightLastMove() {
+      $('#board .square-55d63').removeClass('highlight-lastmove');
+      if (lastMove) {
+        $(`#board .square-${lastMove.from}`).addClass('highlight-lastmove');
+        $(`#board .square-${lastMove.to}`).addClass('highlight-lastmove');
+      }
+    }
+
+    function showLegalMoves(square) {
+      removeHighlights();
+      selectedSquare = square;
+      $(`#board .square-${square}`).addClass('highlight-selected');
+
+      const moves = game.moves({ square: square, verbose: true });
+      moves.forEach(m => {
+        const $sq = $(`#board .square-${m.to}`);
+        if (m.captured) $sq.addClass('legal-capture');
+        else $sq.addClass('legal-dot');
+      });
+    }
+
+    function isHumanTurn() {
+      if (game.game_over() || isEngineThinking) return false;
+      const turn = game.turn() === 'w' ? 'white' : 'black';
+      return turn === userColor;
+    }
+
+    function onDragStart(source, piece) {
+      if (!isHumanTurn()) return false;
+      if ((userColor === 'white' && piece.search(/^b/) !== -1) ||
+          (userColor === 'black' && piece.search(/^w/) !== -1)) {
+        return false;
+      }
+      showLegalMoves(source);
+    }
+
+    function onDrop(source, target) {
+      if (source === target) {
+        showLegalMoves(source);
+        return 'snapback';
+      }
+
+      const move = executeMove({ from: source, to: target, promotion: 'q' });
+      if (!move) {
+        removeHighlights();
+        selectedSquare = null;
+        return 'snapback';
+      }
+    }
+
+    function onSnapEnd() {
+      board.position(game.fen());
+    }
+
+    function setupClickHandlers() {
+      $('#board').on('click', '.square-55d63', function() {
+        if (!isHumanTurn()) return;
+
+        const square = $(this).attr('data-square');
+        const piece = game.get(square);
+
+        // Click 1: Select own piece
+        if (piece && ((userColor === 'white' && piece.color === 'w') || (userColor === 'black' && piece.color === 'b'))) {
+          showLegalMoves(square);
+          return;
+        }
+
+        // Click 2: Move to destination square
+        if (selectedSquare) {
+          const move = executeMove({ from: selectedSquare, to: square, promotion: 'q' });
+          if (!move) {
+            removeHighlights();
+            selectedSquare = null;
+          }
+        }
+      });
+    }
+
+    function updateUI() {
+      updateNotation();
+      updateCaptured();
+      updateBanner();
+
+      const turn = game.turn() === 'w' ? 'white' : 'black';
+      if (turn !== userColor && !game.game_over()) {
+        setTimeout(triggerEngine, 300);
+      }
+    }
+
+    function updateBanner() {
+      const turn = game.turn() === 'w' ? 'White' : 'Black';
+      if (game.in_checkmate()) {
+          $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} is victorious`);
+      }
+      else if (game.in_draw()) {
+          $('#statusBanner').html(`<i class="fa-solid fa-handshake"></i> Draw`);
+      }
+      else if (game.in_check()) {
+          $('#statusBanner').html(`<i class="fa-solid fa-triangle-exclamation" style="color:#c33"></i> Check! ${turn} to move`);
+      }
+      else {
+          $('#statusBanner').html(`<i class="fa-solid fa-circle-play"></i> ${turn} to move`);
+      }
+    }
+
+    function updateNotation() {
+      const history = game.history({ verbose: true });
+      const tbody = $('#moveLog').empty();
+
+      for (let i = 0; i < history.length; i += 2) {
+        const num = Math.floor(i / 2) + 1;
+        const w = history[i] ? history[i].san : '';
+        const b = history[i + 1] ? history[i + 1].san : '';
+
+        tbody.append(`<tr>
+          <td class="move-num">${num}</td>
+          <td class="move-white">${w}</td>
+          <td class="move-black">${b}</td>
+        </tr>`);
+      }
+
+      const container = $('.notation-container');
+      container.scrollTop(container[0].scrollHeight);
+    }
+
+    function updateCaptured() {
+      const history = game.history({ verbose: true });
+      const wCap = [], bCap = [];
+
+      history.forEach(m => {
+        if (m.captured) {
+          if (m.color === 'w') wCap.push(pieceSymbols[m.captured]);
+          else bCap.push(pieceSymbols[m.captured]);
+        }
+      });
+
+      if (userColor === 'white') {
+        $('#bottomCaptured').text(wCap.join(''));
+        $('#topCaptured').text(bCap.join(''));
+      } else {
+        $('#bottomCaptured').text(bCap.join(''));
+        $('#topCaptured').text(wCap.join(''));
+      }
+    }
+
+    function startNewGame() {
+      game.reset();
+      lastMove = null;
+      selectedSquare = null;
+
+      userColor = $('#sideSelect').val();
+      engineDepth = parseInt($('#depthSelect').val());
+
+      board.orientation(userColor);
+      board.position('start');
+
+      if (userColor === 'white') {
+        $('#bottomPlayerName').text('Anonymous');
+        $('#topPlayerName').text('Stockfish Engine');
+      } else {
+        $('#bottomPlayerName').text('Anonymous');
+        $('#topPlayerName').text('Stockfish Engine');
+      }
+
+      $('#evalFill').css('height', '50%');
+      $('#evalText').text('0.0').css('color', '#000');
+
+      removeHighlights();
+      updateUI();
+    }
+
+    $(document).ready(function() {
+      board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd,
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+      });
+
+      $(window).resize(board.resize);
+
+      initStockfish();
+      setupClickHandlers();
+
+      $('#btnNewGame').click(startNewGame);
+      $('#btnUndo').click(() => {
+        if (isEngineThinking) return;
+        game.undo(); game.undo();
+        lastMove = null;
+        removeHighlights();
+        board.position(game.fen());
+        updateUI();
+      });
+      $('#btnFlip').click(() => board.flip());
+      $('#sideSelect').change(startNewGame);
+      $('#depthSelect').change(function() { engineDepth = parseInt($(this).val()); });
+
+      updateUI();
+    });
+  </script>
+</body>
+</html>
