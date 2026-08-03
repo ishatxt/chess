@@ -117,6 +117,40 @@
       min-height: 20px;
     }
 
+    /* Clock Styling */
+    .player-clock {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      background: var(--bg-card);
+      color: #fff;
+      padding: 0.25rem 0.65rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .player-clock.active {
+      background: #381a24;
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 8px rgba(194, 123, 160, 0.4);
+    }
+
+    .player-clock.low-time {
+      color: #ff4d4d;
+      border-color: #ff4d4d;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { box-shadow: 0 0 2px rgba(255, 77, 77, 0.2); }
+      to { box-shadow: 0 0 10px rgba(255, 77, 77, 0.8); }
+    }
+
     .board-layout {
       display: flex;
       gap: 12px;
@@ -199,7 +233,6 @@
       background-color: var(--lastmove-yellow) !important;
     }
 
-    /* Hint Styles */
     .highlight-hint-from {
       box-shadow: inset 0 0 0 4px #00d4ff !important;
       background-color: rgba(0, 212, 255, 0.35) !important;
@@ -485,7 +518,10 @@
             <div style="font-size: 0.75rem; color: var(--text-muted);" id="engineStatus">Ready</div>
           </div>
         </div>
-        <div class="captured-area" id="topCaptured"></div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div class="captured-area" id="topCaptured"></div>
+          <div class="player-clock" id="topClock">00:00</div>
+        </div>
       </div>
 
       <div class="board-layout">
@@ -507,7 +543,10 @@
             <div style="font-size: 0.75rem; color: var(--text-muted);">Human</div>
           </div>
         </div>
-        <div class="captured-area" id="bottomCaptured"></div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div class="captured-area" id="bottomCaptured"></div>
+          <div class="player-clock" id="bottomClock">00:00</div>
+        </div>
       </div>
     </div>
 
@@ -523,14 +562,34 @@
       </div>
 
       <div class="control-panel">
-        <div class="setting-group">
-          <div class="setting-header">
-            <label for="sideSelect">Play As</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+          <div class="setting-group">
+            <div class="setting-header">
+              <label for="sideSelect">Play As</label>
+            </div>
+            <select id="sideSelect">
+              <option value="white" selected>White</option>
+              <option value="black">Black</option>
+            </select>
           </div>
-          <select id="sideSelect">
-            <option value="white" selected>White</option>
-            <option value="black">Black</option>
-          </select>
+
+          <div class="setting-group">
+            <div class="setting-header">
+              <label for="timeSelect">Time Control</label>
+            </div>
+            <select id="timeSelect">
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="180">3 minutes</option>
+              <option value="300" selected>5 minutes</option>
+              <option value="600">10 minutes</option>
+              <option value="900">15 minutes</option>
+              <option value="1800">30 minutes</option>
+              <option value="3600">1 hour</option>
+              <option value="7200">2 hours</option>
+              <option value="0">Unlimited</option>
+            </select>
+          </div>
         </div>
 
         <div class="setting-group">
@@ -591,6 +650,14 @@
     let isRequestingHint = false;
     let isRequestingAutoMove = false;
 
+    // Clock state variables
+    let clockInterval = null;
+    let initialTimeSec = 300;
+    let whiteTimeSec = 300;
+    let blackTimeSec = 300;
+    let isTimeUnlimited = false;
+    let isGameOverByFlag = false;
+
     const pieceSymbols = { p: '♟', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚' };
 
     function initStockfish() {
@@ -633,6 +700,85 @@
       stockfish.postMessage('isready');
     }
 
+    function formatClockTime(sec) {
+      if (isTimeUnlimited) return '∞';
+      const hrs = Math.floor(sec / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      const secs = sec % 60;
+
+      const pad = n => n.toString().padStart(2, '0');
+
+      if (hrs > 0) {
+        return `${hrs}:${pad(mins)}:${pad(secs)}`;
+      }
+      return `${pad(mins)}:${pad(secs)}`;
+    }
+
+    function updateClockDisplays() {
+      const topSec = userColor === 'white' ? blackTimeSec : whiteTimeSec;
+      const bottomSec = userColor === 'white' ? whiteTimeSec : blackTimeSec;
+
+      $('#topClock').text(formatClockTime(topSec));
+      $('#bottomClock').text(formatClockTime(bottomSec));
+
+      const activeColor = game.turn() === 'w' ? 'white' : 'black';
+      const topIsActive = userColor !== activeColor;
+      const bottomIsActive = userColor === activeColor;
+
+      $('#topClock').toggleClass('active', topIsActive && !game.game_over() && !isGameOverByFlag);
+      $('#bottomClock').toggleClass('active', bottomIsActive && !game.game_over() && !isGameOverByFlag);
+
+      $('#topClock').toggleClass('low-time', !isTimeUnlimited && topSec <= 10 && topSec > 0);
+      $('#bottomClock').toggleClass('low-time', !isTimeUnlimited && bottomSec <= 10 && bottomSec > 0);
+    }
+
+    function startClockTimer() {
+      stopClockTimer();
+      if (isTimeUnlimited) return;
+
+      clockInterval = setInterval(() => {
+        if (game.game_over() || isGameOverByFlag) {
+          stopClockTimer();
+          return;
+        }
+
+        // Only tick if game has started (at least 1 move or engine turn)
+        if (game.history().length === 0 && game.turn() === 'w' && userColor === 'white') {
+          return;
+        }
+
+        if (game.turn() === 'w') {
+          whiteTimeSec--;
+          if (whiteTimeSec <= 0) {
+            whiteTimeSec = 0;
+            handleTimeout('w');
+          }
+        } else {
+          blackTimeSec--;
+          if (blackTimeSec <= 0) {
+            blackTimeSec = 0;
+            handleTimeout('b');
+          }
+        }
+
+        updateClockDisplays();
+      }, 1000);
+    }
+
+    function stopClockTimer() {
+      if (clockInterval) {
+        clearInterval(clockInterval);
+        clockInterval = null;
+      }
+    }
+
+    function handleTimeout(timedOutColor) {
+      stopClockTimer();
+      isGameOverByFlag = true;
+      const winner = timedOutColor === 'w' ? 'Black' : 'White';
+      $('#statusBanner').html(`<i class="fa-solid fa-hourglass-end" style="color:#ff4d4d"></i> Time out! ${winner} wins on time.`);
+    }
+
     function handleEngineMessage(e) {
       const line = e.data;
 
@@ -667,7 +813,6 @@
             promotion: moveMatch[1].length === 5 ? moveMatch[1][4] : 'q'
           };
 
-          // --- HANDLE HINT REQUEST ---
           if (isRequestingHint) {
             isRequestingHint = false;
             isEngineThinking = false;
@@ -679,17 +824,15 @@
             $(`#board .square-${rawBestMove.from}`).addClass('highlight-hint-from');
             $(`#board .square-${rawBestMove.to}`).addClass('highlight-hint-to');
 
-            // Format move into standard SAN for status banner
             const tempMove = game.move(rawBestMove);
             if (tempMove) {
               const sanNotation = tempMove.san;
-              game.undo(); // Undo simulation
+              game.undo();
               $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try playing <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
             }
             return;
           }
 
-          // --- HANDLE PLAY BEST MOVE REQUEST ---
           if (isRequestingAutoMove) {
             isRequestingAutoMove = false;
             isEngineThinking = false;
@@ -698,7 +841,6 @@
             return;
           }
 
-          // --- STANDARD ENGINE MOVE LOGIC (WITH BLUNDER MECHANIC) ---
           let chosenMove = rawBestMove;
           let blunderChance = 0;
 
@@ -726,7 +868,7 @@
     }
 
     function triggerEngine() {
-      if (!stockfish || game.game_over() || isEngineThinking) return;
+      if (!stockfish || game.game_over() || isGameOverByFlag || isEngineThinking) return;
       isEngineThinking = true;
       $('#engineStatus').text('Thinking...');
       stockfish.postMessage(`position fen ${game.fen()}`);
@@ -769,6 +911,7 @@
     }
 
     function executeMove(moveObj) {
+      if (isGameOverByFlag) return null;
       const isCapture = game.get(moveObj.to) !== null;
       const move = game.move(moveObj);
       if (!move) return null;
@@ -815,7 +958,7 @@
     }
 
     function isHumanTurn() {
-      if (game.game_over() || isEngineThinking) return false;
+      if (game.game_over() || isGameOverByFlag || isEngineThinking) return false;
       const turn = game.turn() === 'w' ? 'white' : 'black';
       return turn === userColor;
     }
@@ -875,14 +1018,22 @@
       updateNotation();
       updateCaptured();
       updateBanner();
+      updateClockDisplays();
+
+      if (game.game_over() || isGameOverByFlag) {
+        stopClockTimer();
+        return;
+      }
 
       const turn = game.turn() === 'w' ? 'white' : 'black';
-      if (turn !== userColor && !game.game_over()) {
+      if (turn !== userColor) {
         setTimeout(triggerEngine, 250);
       }
     }
 
     function updateBanner() {
+      if (isGameOverByFlag) return;
+
       const turn = game.turn() === 'w' ? 'White' : 'Black';
       if (game.in_checkmate()) {
         $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} is victorious`);
@@ -941,9 +1092,17 @@
       selectedSquare = null;
       isRequestingHint = false;
       isRequestingAutoMove = false;
+      isGameOverByFlag = false;
 
       userColor = $('#sideSelect').val();
       targetElo = parseInt($('#eloSlider').val());
+      
+      const timeVal = parseInt($('#timeSelect').val());
+      isTimeUnlimited = (timeVal === 0);
+      initialTimeSec = timeVal;
+      whiteTimeSec = timeVal;
+      blackTimeSec = timeVal;
+
       configureEngineStrength();
 
       board.orientation(userColor);
@@ -953,6 +1112,7 @@
       $('#evalText').text('0.0').removeClass('top').addClass('bottom');
 
       removeHighlights();
+      startClockTimer();
       updateUI();
     }
 
@@ -975,7 +1135,7 @@
       $('#btnPlayBest').click(requestPlayBestMove);
       $('#btnNewGame').click(startNewGame);
       $('#btnUndo').click(() => {
-        if (isEngineThinking) return;
+        if (isEngineThinking || isGameOverByFlag) return;
         game.undo(); game.undo();
         lastMove = null;
         removeHighlights();
@@ -983,7 +1143,7 @@
         updateUI();
       });
       $('#btnFlip').click(() => board.flip());
-      $('#sideSelect').change(startNewGame);
+      $('#sideSelect, #timeSelect').change(startNewGame);
 
       $('#eloSlider').on('input change', function() {
         targetElo = parseInt($(this).val());
@@ -991,7 +1151,7 @@
         configureEngineStrength();
       });
 
-      updateUI();
+      startNewGame();
     });
   </script>
 </body>
