@@ -27,7 +27,6 @@
       --highlight-selected: rgba(220, 100, 160, 0.5);
       --lastmove-yellow: rgba(155, 81, 224, 0.5);
 
-      /* Eval Bar Color Theme */
       --eval-bg-dark: #2b2925;
       --eval-pink: #c27ba0;
       --eval-white: #ffffff;
@@ -122,7 +121,6 @@
       width: 100%;
     }
 
-    /* --- Chess.com Style Capsule Eval Bar --- */
     .eval-wrapper {
       width: 24px;
       background-color: var(--eval-pink);
@@ -342,7 +340,6 @@
       border: 1px solid var(--border-dark);
     }
 
-    /* Range Slider Styling */
     input[type=range] {
       -webkit-appearance: none;
       width: 100%;
@@ -456,7 +453,6 @@
       </div>
 
       <div class="board-layout">
-        <!-- Capsule Style Eval Bar -->
         <div class="eval-wrapper" title="Evaluation Bar">
           <div class="eval-text bottom" id="evalText">0.0</div>
           <div class="eval-fill" id="evalFill"></div>
@@ -504,9 +500,9 @@
         <div class="setting-group">
           <div class="setting-header">
             <label for="eloSlider">Engine Rating</label>
-            <span class="elo-val-badge" id="eloValueDisplay">1500 Elo</span>
+            <span class="elo-val-badge" id="eloValueDisplay">100 Elo</span>
           </div>
-          <input type="range" id="eloSlider" min="100" max="3700" step="50" value="1500">
+          <input type="range" id="eloSlider" min="100" max="3700" step="50" value="100">
         </div>
 
         <div class="btn-row">
@@ -548,7 +544,7 @@
     let game = new Chess();
     let stockfish = null;
     let userColor = 'white';
-    let targetElo = 1500;
+    let targetElo = 100;
     let selectedSquare = null;
     let lastMove = null;
     let isEngineThinking = false;
@@ -581,12 +577,17 @@
     function configureEngineStrength() {
       if (!stockfish) return;
       stockfish.postMessage('uci');
+
       if (targetElo >= 3700) {
         stockfish.postMessage('setoption name UCI_LimitStrength value false');
+        stockfish.postMessage('setoption name Skill Level value 20');
       } else {
         stockfish.postMessage('setoption name UCI_LimitStrength value true');
         stockfish.postMessage(`setoption name UCI_Elo value ${targetElo}`);
+        const skillLevel = Math.floor(Math.max(0, Math.min(20, (targetElo - 100) / 180)));
+        stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
       }
+
       stockfish.postMessage('isready');
     }
 
@@ -601,11 +602,9 @@
 
           const scoreStr = (cp / 100).toFixed(1);
           const displayScore = cp > 0 ? `+${scoreStr}` : scoreStr;
-
           const percent = Math.max(5, Math.min(95, 50 + (cp / 15)));
 
           $('#evalFill').css('height', `${percent}%`);
-
           const $evalText = $('#evalText');
           $evalText.text(displayScore);
 
@@ -620,12 +619,32 @@
       if (line.startsWith('bestmove')) {
         const moveMatch = line.match(/^bestmove\s([a-h][1-8][a-h][1-8][qrbn]?)/);
         if (moveMatch) {
-          const mStr = moveMatch[1];
-          executeMove({
-            from: mStr.substring(0, 2),
-            to: mStr.substring(2, 4),
-            promotion: mStr.length === 5 ? mStr[4] : 'q'
-          });
+          let chosenMove = {
+            from: moveMatch[1].substring(0, 2),
+            to: moveMatch[1].substring(2, 4),
+            promotion: moveMatch[1].length === 5 ? moveMatch[1][4] : 'q'
+          };
+
+          // --- 100 ELO BLUNDER MECHANIC ---
+          // Calculate blunder chance (60% at 100 Elo, scaling down to 0% at 1200 Elo)
+          let blunderChance = 0;
+          if (targetElo < 1200) {
+            blunderChance = Math.max(0, 0.60 - ((targetElo - 100) / 1100) * 0.60);
+          }
+
+          if (Math.random() < blunderChance) {
+            const legalMoves = game.moves({ verbose: true });
+            if (legalMoves.length > 0) {
+              const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+              chosenMove = {
+                from: randomMove.from,
+                to: randomMove.to,
+                promotion: randomMove.promotion || 'q'
+              };
+            }
+          }
+
+          executeMove(chosenMove);
         }
         isEngineThinking = false;
         $('#engineStatus').text('Ready');
@@ -635,9 +654,18 @@
     function triggerEngine() {
       if (!stockfish || game.game_over() || isEngineThinking) return;
       isEngineThinking = true;
-      $('#engineStatus').text('Calculating...');
+      $('#engineStatus').text('Thinking...');
       stockfish.postMessage(`position fen ${game.fen()}`);
-      stockfish.postMessage('go movetime 1000');
+
+      if (targetElo <= 400) {
+        stockfish.postMessage('go depth 1 movetime 50');
+      } else if (targetElo <= 1000) {
+        stockfish.postMessage('go depth 2 movetime 150');
+      } else if (targetElo <= 1800) {
+        stockfish.postMessage('go depth 5 movetime 400');
+      } else {
+        stockfish.postMessage('go movetime 1000');
+      }
     }
 
     function executeMove(moveObj) {
@@ -747,7 +775,7 @@
 
       const turn = game.turn() === 'w' ? 'white' : 'black';
       if (turn !== userColor && !game.game_over()) {
-        setTimeout(triggerEngine, 300);
+        setTimeout(triggerEngine, 250);
       }
     }
 
@@ -850,7 +878,6 @@
       $('#btnFlip').click(() => board.flip());
       $('#sideSelect').change(startNewGame);
 
-      // Elo Slider Handler
       $('#eloSlider').on('input change', function() {
         targetElo = parseInt($(this).val());
         $('#eloValueDisplay').text(targetElo >= 3700 ? '3700 (Max)' : `${targetElo} Elo`);
