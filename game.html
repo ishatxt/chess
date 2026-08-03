@@ -27,9 +27,6 @@
       --highlight-selected: rgba(220, 100, 160, 0.5);
       --lastmove-yellow: rgba(155, 81, 224, 0.5);
       
-      --hint-from: rgba(0, 212, 255, 0.75);
-      --hint-to: rgba(16, 185, 129, 0.85);
-
       --eval-bg-dark: #2b2925;
       --eval-pink: #c27ba0;
       --eval-white: #ffffff;
@@ -51,6 +48,7 @@
       justify-content: center;
       align-items: center;
       padding: 1.5rem;
+      position: relative;
     }
 
     .chess-app {
@@ -188,15 +186,8 @@
       transition: all 0.3s ease;
     }
 
-    .eval-text.bottom {
-      bottom: 6px;
-      color: #161512;
-    }
-
-    .eval-text.top {
-      top: 6px;
-      color: #ffffff;
-    }
+    .eval-text.bottom { bottom: 6px; color: #161512; }
+    .eval-text.top { top: 6px; color: #ffffff; }
 
     .board-frame {
       flex: 1;
@@ -207,50 +198,23 @@
       position: relative;
     }
 
-    #board {
-      width: 100%;
-      height: 100%;
-    }
+    #board { width: 100%; height: 100%; }
 
-    .white-1e1d7 {
-      background-color: var(--board-light) !important;
-      color: var(--board-dark) !important;
-    }
-    .black-3c85d {
-      background-color: var(--board-dark) !important;
-      color: var(--board-light) !important;
-    }
+    .white-1e1d7 { background-color: var(--board-light) !important; color: var(--board-dark) !important; }
+    .black-3c85d { background-color: var(--board-dark) !important; color: var(--board-light) !important; }
+    .square-55d63 { position: relative; }
 
-    .square-55d63 {
-      position: relative;
-    }
-
-    .highlight-selected {
-      background-color: var(--highlight-selected) !important;
-    }
-
-    .highlight-lastmove {
-      background-color: var(--lastmove-yellow) !important;
-    }
-
-    .highlight-hint-from {
-      box-shadow: inset 0 0 0 4px #00d4ff !important;
-      background-color: rgba(0, 212, 255, 0.35) !important;
-    }
-
-    .highlight-hint-to {
-      box-shadow: inset 0 0 0 4px #10b981 !important;
-      background-color: rgba(16, 185, 129, 0.35) !important;
-    }
+    .highlight-selected { background-color: var(--highlight-selected) !important; }
+    .highlight-lastmove { background-color: var(--lastmove-yellow) !important; }
+    .highlight-hint-from { box-shadow: inset 0 0 0 4px #00d4ff !important; background-color: rgba(0, 212, 255, 0.35) !important; }
+    .highlight-hint-to { box-shadow: inset 0 0 0 4px #10b981 !important; background-color: rgba(16, 185, 129, 0.35) !important; }
 
     .legal-dot::after {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 25%;
-      height: 25%;
+      width: 25%; height: 25%;
       background-color: rgba(0, 0, 0, 0.25);
       border-radius: 50%;
       pointer-events: none;
@@ -260,10 +224,8 @@
     .legal-capture::after {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       border: 6px solid rgba(0, 0, 0, 0.25);
       box-sizing: border-box;
       border-radius: 50%;
@@ -277,236 +239,193 @@
       border-radius: 3px;
       display: flex;
       flex-direction: column;
-      height: 600px;
+      height: 650px;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     @media (max-width: 1024px) {
-      .sidebar {
-        width: 100%;
-        max-width: 600px;
-        height: auto;
-      }
+      .sidebar { width: 100%; max-width: 600px; height: auto; }
     }
 
     .status-alert {
-      padding: 0.8rem 1rem;
+      padding: 0.75rem 1rem;
       background-color: var(--bg-card);
       border-bottom: 1px solid var(--border-dark);
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--text-white);
-      text-align: left;
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      flex-direction: column;
+      gap: 0.25rem;
     }
 
-    .status-alert i {
-      color: var(--accent);
+    .status-main { display: flex; align-items: center; gap: 0.5rem; }
+    .status-alert i { color: var(--accent); }
+
+    .opening-banner {
+      font-size: 0.78rem;
+      color: #00d4ff;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(0, 212, 255, 0.08);
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 212, 255, 0.2);
     }
 
     .notation-container {
       flex: 1;
       overflow-y: auto;
-      min-height: 180px;
+      min-height: 140px;
       background: var(--bg-panel);
     }
 
-    .notation-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: 'Noto Sans', sans-serif;
-      font-size: 0.9rem;
-    }
-
-    .notation-table td {
-      padding: 0.4rem 0.8rem;
-      border-bottom: 1px solid #302e2c;
-    }
-
-    .notation-table tr:nth-child(even) {
-      background-color: var(--bg-card);
-    }
-
-    .move-num {
-      color: var(--text-muted);
-      width: 20%;
-      background: #201e1b;
-      border-bottom: 1px solid #282623 !important;
-      text-align: center;
-    }
-
-    .move-white, .move-black {
-      width: 40%;
-      font-weight: 600;
-      color: #d1d5d8;
-      cursor: pointer;
-    }
-
-    .move-white:hover, .move-black:hover {
-      background: var(--bg-card-hover);
-    }
+    .notation-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .notation-table td { padding: 0.35rem 0.8rem; border-bottom: 1px solid #302e2c; }
+    .notation-table tr:nth-child(even) { background-color: var(--bg-card); }
+    .move-num { color: var(--text-muted); width: 20%; background: #201e1b; text-align: center; }
+    .move-white, .move-black { width: 40%; font-weight: 600; color: #d1d5d8; cursor: pointer; }
+    .move-white:hover, .move-black:hover { background: var(--bg-card-hover); }
 
     .control-panel {
-      padding: 1rem;
+      padding: 0.85rem;
       background-color: var(--bg-panel);
       border-top: 1px solid var(--border-dark);
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
+      gap: 0.65rem;
     }
 
-    .setting-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .setting-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .setting-group label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
+    .setting-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .setting-header { display: flex; justify-content: space-between; align-items: center; }
+    .setting-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
 
     .elo-val-badge {
       font-family: 'Roboto Mono', monospace;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: var(--accent);
       background: var(--bg-card);
-      padding: 0.15rem 0.5rem;
+      padding: 0.1rem 0.4rem;
       border-radius: 3px;
       border: 1px solid var(--border-dark);
     }
 
-    input[type=range] {
-      -webkit-appearance: none;
-      width: 100%;
-      background: transparent;
-    }
-
-    input[type=range]:focus {
-      outline: none;
-    }
-
+    input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+    input[type=range]:focus { outline: none; }
     input[type=range]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 6px;
-      cursor: pointer;
-      background: var(--bg-card);
-      border-radius: 3px;
-      border: 1px solid var(--border-dark);
+      width: 100%; height: 6px; cursor: pointer; background: var(--bg-card); border-radius: 3px; border: 1px solid var(--border-dark);
     }
-
     input[type=range]::-webkit-slider-thumb {
-      height: 16px;
-      width: 16px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-      -webkit-appearance: none;
-      margin-top: -6px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+      height: 16px; width: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; -webkit-appearance: none; margin-top: -6px;
     }
 
-    input[type=range]::-moz-range-track {
-      width: 100%;
-      height: 6px;
-      cursor: pointer;
-      background: var(--bg-card);
-      border-radius: 3px;
-      border: 1px solid var(--border-dark);
-    }
-
-    input[type=range]::-moz-range-thumb {
-      height: 16px;
-      width: 16px;
-      border: none;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-    }
-
-    select {
+    select, input[type="text"] {
       background-color: var(--bg-card);
       color: var(--text-white);
       border: 1px solid var(--border-dark);
-      padding: 0.4rem 0.6rem;
+      padding: 0.35rem 0.5rem;
       border-radius: 3px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       outline: none;
       font-weight: 600;
       width: 100%;
     }
 
-    .btn-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin-top: 0.2rem;
-    }
+    .btn-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+    .btn-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
 
     .btn-action {
       background-color: var(--bg-card);
       color: var(--text-white);
       border: 1px solid var(--border-dark);
-      padding: 0.65rem;
-      font-size: 0.85rem;
+      padding: 0.55rem;
+      font-size: 0.8rem;
       font-weight: 600;
       border-radius: 3px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       transition: all 0.1s ease;
     }
 
-    .btn-action:hover {
-      background-color: var(--bg-card-hover);
-      color: #fff;
+    .btn-action:hover { background-color: var(--bg-card-hover); color: #fff; }
+    .btn-action:active { background-color: #403d39; }
+    .btn-primary { grid-column: span 2; background-color: #3e2634; border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background-color: #523145; }
+    .btn-hint { background-color: #243542; border-color: #3b5266; color: #00d4ff; }
+    .btn-bestmove { background-color: #233b33; border-color: #325a4d; color: #10b981; }
+
+    /* Toast Notification */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: #10b981;
+      color: #ffffff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+      opacity: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .btn-action:active {
-      background-color: #403d39;
+    .toast-notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
-    .btn-primary {
-      grid-column: span 2;
+    /* Modal Overlay for FEN import */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
     }
 
-    .btn-hint {
-      background-color: #243542;
-      border-color: #3b5266;
-      color: #00d4ff;
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
     }
 
-    .btn-hint:hover {
-      background-color: #2c4457;
-      color: #5ce1ff;
-    }
-
-    .btn-bestmove {
-      background-color: #233b33;
-      border-color: #325a4d;
-      color: #10b981;
-    }
-
-    .btn-bestmove:hover {
-      background-color: #2a4b41;
-      color: #34d399;
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      padding: 1.5rem;
+      border-radius: 6px;
+      width: 90%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
   </style>
 </head>
 <body>
+
+  <!-- Lichess Standard Audio Elements -->
+  <audio id="soundMove" src="https://lichess1.org/assets/sound/standard/Move.mp3" preload="auto"></audio>
+  <audio id="soundCapture" src="https://lichess1.org/assets/sound/standard/Capture.mp3" preload="auto"></audio>
+  <audio id="soundCheck" src="https://lichess1.org/assets/sound/standard/Check.mp3" preload="auto"></audio>
 
   <div class="chess-app">
     <div class="board-container">
@@ -551,8 +470,13 @@
     </div>
 
     <aside class="sidebar">
-      <div class="status-alert" id="statusBanner">
-        <i class="fa-solid fa-circle-play"></i> White to move
+      <div class="status-alert">
+        <div class="status-main" id="statusBanner">
+          <i class="fa-solid fa-circle-play"></i> White to move
+        </div>
+        <div class="opening-banner" id="openingBanner" style="display: none;">
+          <i class="fa-solid fa-book-open"></i> <span id="openingName"></span>
+        </div>
       </div>
 
       <div class="notation-container">
@@ -562,11 +486,9 @@
       </div>
 
       <div class="control-panel">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem;">
           <div class="setting-group">
-            <div class="setting-header">
-              <label for="sideSelect">Play As</label>
-            </div>
+            <label for="sideSelect">Side</label>
             <select id="sideSelect">
               <option value="white" selected>White</option>
               <option value="black">Black</option>
@@ -574,20 +496,30 @@
           </div>
 
           <div class="setting-group">
-            <div class="setting-header">
-              <label for="timeSelect">Time Control</label>
-            </div>
+            <label for="timeSelect">Time</label>
             <select id="timeSelect">
-              <option value="30">30 seconds</option>
-              <option value="60">1 minute</option>
-              <option value="180">3 minutes</option>
-              <option value="300" selected>5 minutes</option>
-              <option value="600">10 minutes</option>
-              <option value="900">15 minutes</option>
-              <option value="1800">30 minutes</option>
-              <option value="3600">1 hour</option>
-              <option value="7200">2 hours</option>
-              <option value="0">Unlimited</option>
+              <option value="30">30s</option>
+              <option value="60">1m</option>
+              <option value="180">3m</option>
+              <option value="300" selected>5m</option>
+              <option value="600">10m</option>
+              <option value="900">15m</option>
+              <option value="1800">30m</option>
+              <option value="3600">1h</option>
+              <option value="7200">2h</option>
+              <option value="0">∞</option>
+            </select>
+          </div>
+
+          <div class="setting-group">
+            <label for="incSelect">Increment</label>
+            <select id="incSelect">
+              <option value="0" selected>+0s</option>
+              <option value="1">+1s</option>
+              <option value="2">+2s</option>
+              <option value="3">+3s</option>
+              <option value="5">+5s</option>
+              <option value="10">+10s</option>
             </select>
           </div>
         </div>
@@ -603,12 +535,39 @@
         <div class="btn-row">
           <button class="btn-action btn-hint" id="btnHint"><i class="fa-solid fa-lightbulb"></i> Hint</button>
           <button class="btn-action btn-bestmove" id="btnPlayBest"><i class="fa-solid fa-wand-magic-sparkles"></i> Play Best</button>
-          <button class="btn-action btn-primary" id="btnNewGame"><i class="fa-solid fa-plus"></i> Create a game</button>
+          <button class="btn-action btn-primary" id="btnNewGame"><i class="fa-solid fa-plus"></i> New Game</button>
+        </div>
+
+        <div class="btn-row-3">
           <button class="btn-action" id="btnUndo"><i class="fa-solid fa-backward-step"></i> Undo</button>
           <button class="btn-action" id="btnFlip"><i class="fa-solid fa-retweet"></i> Flip</button>
+          <button class="btn-action" id="btnCopyPGN"><i class="fa-solid fa-copy"></i> PGN</button>
+        </div>
+
+        <div class="btn-row-3">
+          <button class="btn-action" id="btnCopyFEN"><i class="fa-solid fa-code"></i> FEN</button>
+          <button class="btn-action" id="btnImportFEN" style="grid-column: span 2;"><i class="fa-solid fa-file-import"></i> Load FEN Position</button>
         </div>
       </div>
     </aside>
+  </div>
+
+  <!-- FEN Import Modal -->
+  <div class="modal-overlay" id="fenModal">
+    <div class="modal-card">
+      <h3 style="color: var(--text-white); font-size: 1.1rem;"><i class="fa-solid fa-file-import" style="color: var(--accent)"></i> Import FEN Position</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">Paste a FEN position string to set up custom chess puzzles, practice endgames, or position studies.</p>
+      <input type="text" id="fenInput" placeholder="e.g. r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3">
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+        <button class="btn-action" id="btnCancelFEN">Cancel</button>
+        <button class="btn-action btn-bestmove" id="btnLoadFENConfirm">Load Position</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-notification" id="toast">
+    <i class="fa-solid fa-check"></i> <span id="toastMsg">Copied to clipboard!</span>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -616,26 +575,60 @@
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
   <script>
-    class SoundEngine {
-      constructor() {
-        this.sounds = {
-          move: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Move.mp3'),
-          capture: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Capture.mp3'),
-          check: new Audio('https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/sound/standard/Check.mp3')
-        };
-        Object.values(this.sounds).forEach(audio => audio.preload = 'auto');
-      }
+    // --- Lichess Sound Engine matching pgn.html format ---
+    function playLichessSound(move) {
+      if (!move) return;
 
-      play(type) {
-        const sound = this.sounds[type];
-        if (sound) {
-          sound.currentTime = 0;
-          sound.play().catch(() => {});
+      const soundMove = document.getElementById('soundMove');
+      const soundCapture = document.getElementById('soundCapture');
+      const soundCheck = document.getElementById('soundCheck');
+
+      [soundMove, soundCapture, soundCheck].forEach(s => {
+        if (s) {
+          s.pause();
+          s.currentTime = 0;
         }
+      });
+
+      if (move.san.includes('+') || move.san.includes('#')) {
+        soundCheck.play().catch(() => {});
+      } else if (move.captured || move.san.includes('x')) {
+        soundCapture.play().catch(() => {});
+      } else {
+        soundMove.play().catch(() => {});
       }
     }
 
-    const sounds = new SoundEngine();
+    // --- Opening Explorer Database (ECO Dictionary) ---
+    const OPENINGS_DB = {
+      "e4": "King's Pawn Opening",
+      "e4 e5": "Open Game",
+      "e4 e5 Nf3 Nc6 Bb5": "Ruy Lopez",
+      "e4 e5 Nf3 Nc6 Bc4": "Italian Game",
+      "e4 e5 Nf3 Nc6 Bc4 Bc5": "Giuoco Piano",
+      "e4 e5 Nf3 Nf6": "Petrov's Defense",
+      "e4 c5": "Sicilian Defense",
+      "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6": "Sicilian Defense: Najdorf Variation",
+      "e4 c5 Nf3 Nc6": "Sicilian Defense: Old Sicilian",
+      "e4 e6": "French Defense",
+      "e4 c6": "Caro-Kann Defense",
+      "e4 d6": "Pirc Defense",
+      "e4 g6": "Modern Defense",
+      "d4": "Queen's Pawn Opening",
+      "d4 d5": "Closed Game",
+      "d4 d5 c4": "Queen's Gambit",
+      "d4 d5 c4 dxc4": "Queen's Gambit Accepted",
+      "d4 d5 c4 e6": "Queen's Gambit Declined",
+      "d4 d5 c4 c6": "Slav Defense",
+      "d4 Nf6": "Indian Defense",
+      "d4 Nf6 c4 g6 Nc3 d5": "Grünfeld Defense",
+      "d4 Nf6 c4 g6 Nc3 Bg7": "King's Indian Defense",
+      "d4 Nf6 c4 e6 Nc3 Bb4": "Nimzo-Indian Defense",
+      "c4": "English Opening",
+      "Nf3": "Réti Opening",
+      "f4": "Bird's Opening",
+      "b3": "Nimzo-Larsen Attack"
+    };
 
     let board = null;
     let game = new Chess();
@@ -650,15 +643,21 @@
     let isRequestingHint = false;
     let isRequestingAutoMove = false;
 
-    // Clock state variables
+    // Clock & Increment State
     let clockInterval = null;
-    let initialTimeSec = 300;
     let whiteTimeSec = 300;
     let blackTimeSec = 300;
+    let timeIncrementSec = 0;
     let isTimeUnlimited = false;
     let isGameOverByFlag = false;
 
     const pieceSymbols = { p: '♟', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚' };
+
+    function showToast(text) {
+      $('#toastMsg').text(text);
+      const $t = $('#toast').addClass('show');
+      setTimeout(() => $t.removeClass('show'), 2500);
+    }
 
     function initStockfish() {
       const sfUrl = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js';
@@ -705,12 +704,9 @@
       const hrs = Math.floor(sec / 3600);
       const mins = Math.floor((sec % 3600) / 60);
       const secs = sec % 60;
-
       const pad = n => n.toString().padStart(2, '0');
 
-      if (hrs > 0) {
-        return `${hrs}:${pad(mins)}:${pad(secs)}`;
-      }
+      if (hrs > 0) return `${hrs}:${pad(mins)}:${pad(secs)}`;
       return `${pad(mins)}:${pad(secs)}`;
     }
 
@@ -742,23 +738,14 @@
           return;
         }
 
-        // Only tick if game has started (at least 1 move or engine turn)
-        if (game.history().length === 0 && game.turn() === 'w' && userColor === 'white') {
-          return;
-        }
+        if (game.history().length === 0 && game.turn() === 'w' && userColor === 'white') return;
 
         if (game.turn() === 'w') {
           whiteTimeSec--;
-          if (whiteTimeSec <= 0) {
-            whiteTimeSec = 0;
-            handleTimeout('w');
-          }
+          if (whiteTimeSec <= 0) { whiteTimeSec = 0; handleTimeout('w'); }
         } else {
           blackTimeSec--;
-          if (blackTimeSec <= 0) {
-            blackTimeSec = 0;
-            handleTimeout('b');
-          }
+          if (blackTimeSec <= 0) { blackTimeSec = 0; handleTimeout('b'); }
         }
 
         updateClockDisplays();
@@ -779,6 +766,24 @@
       $('#statusBanner').html(`<i class="fa-solid fa-hourglass-end" style="color:#ff4d4d"></i> Time out! ${winner} wins on time.`);
     }
 
+    function detectOpening() {
+      const historyStr = game.history().join(' ');
+      let matchedOpening = null;
+
+      Object.keys(OPENINGS_DB).forEach(pgnKey => {
+        if (historyStr.startsWith(pgnKey)) {
+          matchedOpening = OPENINGS_DB[pgnKey];
+        }
+      });
+
+      if (matchedOpening) {
+        $('#openingName').text(matchedOpening);
+        $('#openingBanner').show();
+      } else if (game.history().length === 0) {
+        $('#openingBanner').hide();
+      }
+    }
+
     function handleEngineMessage(e) {
       const line = e.data;
 
@@ -796,11 +801,8 @@
           const $evalText = $('#evalText');
           $evalText.text(displayScore);
 
-          if (percent > 50) {
-            $evalText.removeClass('top').addClass('bottom');
-          } else {
-            $evalText.removeClass('bottom').addClass('top');
-          }
+          if (percent > 50) $evalText.removeClass('top').addClass('bottom');
+          else $evalText.removeClass('bottom').addClass('top');
         }
       }
 
@@ -828,7 +830,7 @@
             if (tempMove) {
               const sanNotation = tempMove.san;
               game.undo();
-              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try playing <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
+              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
             }
             return;
           }
@@ -852,11 +854,7 @@
             const legalMoves = game.moves({ verbose: true });
             if (legalMoves.length > 0) {
               const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-              chosenMove = {
-                from: randomMove.from,
-                to: randomMove.to,
-                promotion: randomMove.promotion || 'q'
-              };
+              chosenMove = { from: randomMove.from, to: randomMove.to, promotion: randomMove.promotion || 'q' };
             }
           }
 
@@ -873,15 +871,10 @@
       $('#engineStatus').text('Thinking...');
       stockfish.postMessage(`position fen ${game.fen()}`);
 
-      if (targetElo <= 400) {
-        stockfish.postMessage('go depth 1 movetime 50');
-      } else if (targetElo <= 1000) {
-        stockfish.postMessage('go depth 2 movetime 150');
-      } else if (targetElo <= 1800) {
-        stockfish.postMessage('go depth 5 movetime 400');
-      } else {
-        stockfish.postMessage('go movetime 1000');
-      }
+      if (targetElo <= 400) stockfish.postMessage('go depth 1 movetime 50');
+      else if (targetElo <= 1000) stockfish.postMessage('go depth 2 movetime 150');
+      else if (targetElo <= 1800) stockfish.postMessage('go depth 5 movetime 400');
+      else stockfish.postMessage('go movetime 1000');
     }
 
     function requestHint() {
@@ -912,9 +905,16 @@
 
     function executeMove(moveObj) {
       if (isGameOverByFlag) return null;
-      const isCapture = game.get(moveObj.to) !== null;
+      const movingColor = game.turn();
+
       const move = game.move(moveObj);
       if (!move) return null;
+
+      // Fischer Delay / Increment
+      if (timeIncrementSec > 0 && !isTimeUnlimited) {
+        if (movingColor === 'w') whiteTimeSec += timeIncrementSec;
+        else blackTimeSec += timeIncrementSec;
+      }
 
       lastMove = { from: move.from, to: move.to };
       selectedSquare = null;
@@ -923,10 +923,10 @@
       board.position(game.fen());
       highlightLastMove();
 
-      if (game.in_check()) sounds.play('check');
-      else if (isCapture) sounds.play('capture');
-      else sounds.play('move');
+      // Play Lichess sound effects
+      playLichessSound(move);
 
+      detectOpening();
       updateUI();
       return move;
     }
@@ -1036,7 +1036,7 @@
 
       const turn = game.turn() === 'w' ? 'White' : 'Black';
       if (game.in_checkmate()) {
-        $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} is victorious`);
+        $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} wins`);
       } else if (game.in_draw()) {
         $('#statusBanner').html(`<i class="fa-solid fa-handshake"></i> Draw`);
       } else if (game.in_check()) {
@@ -1098,8 +1098,9 @@
       targetElo = parseInt($('#eloSlider').val());
       
       const timeVal = parseInt($('#timeSelect').val());
+      timeIncrementSec = parseInt($('#incSelect').val());
       isTimeUnlimited = (timeVal === 0);
-      initialTimeSec = timeVal;
+
       whiteTimeSec = timeVal;
       blackTimeSec = timeVal;
 
@@ -1110,10 +1111,35 @@
 
       $('#evalFill').css('height', '50%');
       $('#evalText').text('0.0').removeClass('top').addClass('bottom');
+      $('#openingBanner').hide();
 
       removeHighlights();
       startClockTimer();
       updateUI();
+    }
+
+    function loadCustomFEN(fenStr) {
+      fenStr = fenStr.trim();
+      if (!fenStr) return;
+
+      if (!game.load(fenStr)) {
+        alert('Invalid FEN position string!');
+        return;
+      }
+
+      lastMove = null;
+      selectedSquare = null;
+      isGameOverByFlag = false;
+
+      board.position(game.fen());
+      removeHighlights();
+      $('#openingBanner').hide();
+
+      $('#evalFill').css('height', '50%');
+      $('#evalText').text('0.0');
+
+      updateUI();
+      showToast('FEN Position Loaded!');
     }
 
     $(document).ready(function() {
@@ -1134,16 +1160,44 @@
       $('#btnHint').click(requestHint);
       $('#btnPlayBest').click(requestPlayBestMove);
       $('#btnNewGame').click(startNewGame);
+      
       $('#btnUndo').click(() => {
         if (isEngineThinking || isGameOverByFlag) return;
         game.undo(); game.undo();
         lastMove = null;
         removeHighlights();
         board.position(game.fen());
+        detectOpening();
         updateUI();
       });
+
       $('#btnFlip').click(() => board.flip());
-      $('#sideSelect, #timeSelect').change(startNewGame);
+
+      // Copy PGN & FEN
+      $('#btnCopyPGN').click(() => {
+        const pgn = game.pgn() || "1. e4";
+        navigator.clipboard.writeText(pgn).then(() => showToast('PGN Copied!'));
+      });
+
+      $('#btnCopyFEN').click(() => {
+        const fen = game.fen();
+        navigator.clipboard.writeText(fen).then(() => showToast('FEN Copied!'));
+      });
+
+      // Modal FEN Handling
+      $('#btnImportFEN').click(() => $('#fenModal').addClass('active'));
+      $('#btnCancelFEN').click(() => $('#fenModal').removeClass('active'));
+      
+      $('#btnLoadFENConfirm').click(() => {
+        const fen = $('#fenInput').val();
+        if (fen) {
+          loadCustomFEN(fen);
+          $('#fenInput').val('');
+          $('#fenModal').removeClass('active');
+        }
+      });
+
+      $('#sideSelect, #timeSelect, #incSelect').change(startNewGame);
 
       $('#eloSlider').on('input change', function() {
         targetElo = parseInt($(this).val());
