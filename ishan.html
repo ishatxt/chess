@@ -13,22 +13,22 @@
 
   <style>
     :root {
-      --bg-dark: #121212;
-      --bg-panel: #1e1e1e;
-      --bg-card: #252525;
-      --bg-card-hover: #333333;
-      --accent: #ffffff;
-      --text-white: #e0e0e0;
-      --text-muted: #9e9e9e;
-      --border-dark: #3a3a3a;
+      --bg-dark: #161512;
+      --bg-panel: #262421;
+      --bg-card: #2b2925;
+      --bg-card-hover: #363431;
+      --accent: #c27ba0;
+      --text-white: #c9d1d9;
+      --text-muted: #8b8886;
+      --border-dark: #3e3b37;
       
-      --board-light: #e0e0e0;
-      --board-dark: #707070;
-      --highlight-selected: rgba(255, 255, 255, 0.3);
-      --lastmove-yellow: rgba(255, 255, 255, 0.2);
+      --board-light: #f3e0ec;
+      --board-dark: #c27ba0;
+      --highlight-selected: rgba(220, 100, 160, 0.5);
+      --lastmove-yellow: rgba(155, 81, 224, 0.5);
       
-      --eval-bg-dark: #252525;
-      --eval-pink: #555555;
+      --eval-bg-dark: #2b2925;
+      --eval-pink: #c27ba0;
       --eval-white: #ffffff;
     }
 
@@ -132,10 +132,10 @@
     }
 
     .player-clock.active {
-      background: #2a2a2a;
+      background: #381a24;
       border-color: var(--accent);
       color: #fff;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 8px rgba(194, 123, 160, 0.4);
     }
 
     .player-clock.low-time {
@@ -186,7 +186,7 @@
       transition: all 0.3s ease;
     }
 
-    .eval-text.bottom { bottom: 6px; color: #121212; }
+    .eval-text.bottom { bottom: 6px; color: #161512; }
     .eval-text.top { top: 6px; color: #ffffff; }
 
     .board-frame {
@@ -206,8 +206,8 @@
 
     .highlight-selected { background-color: var(--highlight-selected) !important; }
     .highlight-lastmove { background-color: var(--lastmove-yellow) !important; }
-    .highlight-hint-from { box-shadow: inset 0 0 0 4px #ffffff !important; background-color: rgba(255, 255, 255, 0.3) !important; }
-    .highlight-hint-to { box-shadow: inset 0 0 0 4px #aaaaaa !important; background-color: rgba(170, 170, 170, 0.3) !important; }
+    .highlight-hint-from { box-shadow: inset 0 0 0 4px #00d4ff !important; background-color: rgba(0, 212, 255, 0.35) !important; }
+    .highlight-hint-to { box-shadow: inset 0 0 0 4px #10b981 !important; background-color: rgba(16, 185, 129, 0.35) !important; }
 
     .legal-dot::after {
       content: '';
@@ -265,15 +265,15 @@
 
     .opening-banner {
       font-size: 0.78rem;
-      color: #ffffff;
+      color: #00d4ff;
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 0.35rem;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(0, 212, 255, 0.08);
       padding: 0.2rem 0.5rem;
       border-radius: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(0, 212, 255, 0.2);
     }
 
     .notation-container {
@@ -284,9 +284,9 @@
     }
 
     .notation-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .notation-table td { padding: 0.35rem 0.8rem; border-bottom: 1px solid #2a2a2a; }
+    .notation-table td { padding: 0.35rem 0.8rem; border-bottom: 1px solid #302e2c; }
     .notation-table tr:nth-child(even) { background-color: var(--bg-card); }
-    .move-num { color: var(--text-muted); width: 20%; background: #181818; text-align: center; }
+    .move-num { color: var(--text-muted); width: 20%; background: #201e1b; text-align: center; }
     .move-white, .move-black { width: 40%; font-weight: 600; color: #d1d5d8; cursor: pointer; }
     .move-white:hover, .move-black:hover { background: var(--bg-card-hover); }
 
@@ -347,10 +347,10 @@
 
     .btn-action:hover { background-color: var(--bg-card-hover); color: #fff; }
     .btn-action:active { background-color: #403d39; }
-    .btn-primary { grid-column: span 2; background-color: #333333; border-color: var(--accent); color: #fff; }
-    .btn-primary:hover { background-color: #444444; }
-    .btn-hint { background-color: #222222; border-color: #444444; color: #ffffff; }
-    .btn-bestmove { background-color: #222222; border-color: #444444; color: #ffffff; }
+    .btn-primary { grid-column: span 2; background-color: #3e2634; border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background-color: #523145; }
+    .btn-hint { background-color: #243542; border-color: #3b5266; color: #00d4ff; }
+    .btn-bestmove { background-color: #233b33; border-color: #325a4d; color: #10b981; }
 
     /* Toast Notification */
     .toast-notification {
@@ -358,9 +358,8 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background-color: #333333;
+      background-color: #10b981;
       color: #ffffff;
-      border: 1px solid var(--border-dark);
       padding: 0.6rem 1.2rem;
       border-radius: 4px;
       font-weight: 700;
@@ -681,6 +680,7 @@
       stockfish.postMessage('setoption name UCI_LimitStrength value false');
       stockfish.postMessage('setoption name Skill Level value 20');
       
+      // Adding multi-pv or aggressive contempt if supported, or standard strong configuration
       stockfish.postMessage('isready');
     }
 
@@ -815,7 +815,7 @@
             if (tempMove) {
               const sanNotation = tempMove.san;
               game.undo();
-              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#ffffff"></i> Hint: Try <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
+              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
             }
             return;
           }
@@ -876,6 +876,7 @@
       const move = game.move(moveObj);
       if (!move) return null;
 
+      // Fischer Delay / Increment
       if (timeIncrementSec > 0 && !isTimeUnlimited) {
         if (movingColor === 'w') whiteTimeSec += timeIncrementSec;
         else blackTimeSec += timeIncrementSec;
@@ -888,6 +889,7 @@
       board.position(game.fen());
       highlightLastMove();
 
+      // Play Lichess sound effects
       playLichessSound(move);
 
       detectOpening();
@@ -1000,11 +1002,11 @@
 
       const turn = game.turn() === 'w' ? 'White' : 'Black';
       if (game.in_checkmate()) {
-        $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#ffffff"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} wins`);
+        $('#statusBanner').html(`<i class="fa-solid fa-trophy" style="color:#d18728"></i> Checkmate! ${turn === 'White' ? 'Black' : 'White'} wins`);
       } else if (game.in_draw()) {
         $('#statusBanner').html(`<i class="fa-solid fa-handshake"></i> Draw`);
       } else if (game.in_check()) {
-        $('#statusBanner').html(`<i class="fa-solid fa-triangle-exclamation" style="color:#ffffff"></i> Check! ${turn} to move`);
+        $('#statusBanner').html(`<i class="fa-solid fa-triangle-exclamation" style="color:#c33"></i> Check! ${turn} to move`);
       } else {
         $('#statusBanner').html(`<i class="fa-solid fa-circle-play"></i> ${turn} to move`);
       }
@@ -1136,6 +1138,7 @@
 
       $('#btnFlip').click(() => board.flip());
 
+      // Copy PGN & FEN
       $('#btnCopyPGN').click(() => {
         const pgn = game.pgn() || "1. e4";
         navigator.clipboard.writeText(pgn).then(() => showToast('PGN Copied!'));
@@ -1146,6 +1149,7 @@
         navigator.clipboard.writeText(fen).then(() => showToast('FEN Copied!'));
       });
 
+      // Modal FEN Handling
       $('#btnImportFEN').click(() => $('#fenModal').addClass('active'));
       $('#btnCancelFEN').click(() => $('#fenModal').removeClass('active'));
       
