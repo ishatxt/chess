@@ -41,12 +41,22 @@
     .bot-card:hover { background-color: var(--bg-card-hover); border-color: var(--accent-orange); transform: translateX(4px); }
     .bot-info { display: flex; gap: 1.2rem; align-items: center; }
     .bot-avatar { font-size: 2.5rem; color: var(--accent-orange); width: 60px; height: 60px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border-dark); }
-    .bot-name { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem; }
+    .bot-name { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.6rem; }
     .bot-title { font-size: 0.85rem; color: var(--accent-orange); font-weight: 600; margin-bottom: 0.3rem; }
     .bot-desc { font-size: 0.85rem; color: var(--text-muted); max-width: 450px; }
     .bot-action { font-weight: 700; font-size: 0.9rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
     .back-link { align-self: flex-start; margin-bottom: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
     .back-link:hover { color: #fff; }
+    .dev-badge {
+      font-size: 0.65rem;
+      background-color: var(--accent-orange);
+      color: var(--bg-dark);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -56,6 +66,19 @@
   <main>
     <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
     <div class="bot-list">
+      <!-- Ishan Bot Card -->
+      <a href="ishan.html" class="bot-card">
+        <div class="bot-info">
+          <div class="bot-avatar"><i class="fa-solid fa-terminal"></i></div>
+          <div>
+            <div class="bot-name">Ishan <span class="dev-badge">DEV</span></div>
+            <div class="bot-title">The Code Architect (Uncompromising Logic — 2800 Elo)</div>
+            <div class="bot-desc">Precision calculation, optimized positional refactorings, and bulletproof strategic execution straight from the terminal.</div>
+          </div>
+        </div>
+        <div class="bot-action">Play <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+
       <!-- Bobby Fischer Bot Card -->
       <a href="bobby.html" class="bot-card">
         <div class="bot-info">
