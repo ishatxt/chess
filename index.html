@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>iChess — Modern Web Chess Workspace</title>
 
-  <!-- Google Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -21,6 +20,7 @@
       --accent-purple: #9b51e0;
       --accent-blue: #3692e7;
       --accent-green: #10b981;
+      --accent-orange: #f59e0b;
       --text-white: #c9d1d9;
       --text-muted: #8b8886;
       --border-dark: #3e3b37;
@@ -44,7 +44,6 @@
       padding: 2rem 1.5rem;
     }
 
-    /* Header / Brand */
     header {
       text-align: center;
       margin-top: 1.5rem;
@@ -68,14 +67,12 @@
       font-weight: 600;
     }
 
-    /* Main Container */
     main {
       width: 100%;
       max-width: 1200px;
       margin: 3rem 0;
     }
 
-    /* Mode Selection Grid */
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -116,6 +113,7 @@
     }
 
     .card-play:hover::before { background: var(--accent-pink); }
+    .card-bots:hover::before { background: var(--accent-orange); }
     .card-pgn:hover::before { background: var(--accent-purple); }
     .card-analyze:hover::before { background: var(--accent-blue); }
     .card-puzzle:hover::before { background: var(--accent-green); }
@@ -126,6 +124,7 @@
     }
 
     .card-play .card-icon { color: var(--accent-pink); }
+    .card-bots .card-icon { color: var(--accent-orange); }
     .card-pgn .card-icon { color: var(--accent-purple); }
     .card-analyze .card-icon { color: var(--accent-blue); }
     .card-puzzle .card-icon { color: var(--accent-green); }
@@ -156,7 +155,6 @@
       color: #fff;
     }
 
-    /* Footer */
     footer {
       color: var(--text-muted);
       font-size: 0.85rem;
@@ -166,17 +164,14 @@
 </head>
 <body>
 
-  <!-- Header -->
   <header>
     <div class="brand-logo">i<span>Chess</span></div>
     <p class="tagline">Minimalist Stockfish Engine & PGN Workspace</p>
   </header>
 
-  <!-- Main Navigation Options -->
-  <main>
+<main>
     <div class="cards-grid">
       
-      <!-- Option 1: Play Chess -->
       <a href="game.html" class="card card-play" id="btnPlay">
         <div>
           <div class="card-icon"><i class="fa-solid fa-chess-board"></i></div>
@@ -186,7 +181,16 @@
         <div class="card-btn">Start Game <i class="fa-solid fa-arrow-right"></i></div>
       </a>
 
-      <!-- Option 2: Paste PGN -->
+      <!-- NEW BOTS CARD -->
+      <a href="bots.html" class="card card-bots" id="btnBots">
+        <div>
+          <div class="card-icon"><i class="fa-solid fa-robot"></i></div>
+          <div class="card-title">Bots & Legends</div>
+          <div class="card-desc">Play against customized chess personalities like "The Magician from Riga" Mikhail Tal.</div>
+        </div>
+        <div class="card-btn">Choose Bot <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+
       <a href="pgn.html" class="card card-pgn" id="btnPgn">
         <div>
           <div class="card-icon"><i class="fa-solid fa-file-code"></i></div>
@@ -196,7 +200,6 @@
         <div class="card-btn">Open Workspace <i class="fa-solid fa-arrow-right"></i></div>
       </a>
 
-      <!-- Option 3: Analyze Game -->
       <a href="game.html?mode=analyze" class="card card-analyze" id="btnAnalyze">
         <div>
           <div class="card-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
@@ -206,7 +209,6 @@
         <div class="card-btn">Open Engine <i class="fa-solid fa-arrow-right"></i></div>
       </a>
 
-      <!-- Option 4: Puzzles -->
       <a href="puzzle.html" class="card card-puzzle" id="btnPuzzle">
         <div>
           <div class="card-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
@@ -219,7 +221,6 @@
     </div>
   </main>
 
-  <!-- Footer -->
   <footer>
     &copy; 2026 iChess • Clean Web Chess Workspace
   </footer>

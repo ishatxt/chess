@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iChess — Select Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #161512;
+      --bg-panel: #262421;
+      --bg-card: #2b2925;
+      --bg-card-hover: #363431;
+      --accent-orange: #f59e0b;
+      --text-white: #c9d1d9;
+      --text-muted: #8b8886;
+      --border-dark: #3e3b37;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-white); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1.5rem; }
+    header { text-align: center; margin: 2rem 0; }
+    .brand-logo { font-size: 2.5rem; font-weight: 800; color: #fff; text-decoration: none; }
+    .brand-logo span { color: var(--accent-orange); }
+    main { width: 100%; max-width: 800px; }
+    .bot-list { display: flex; flex-direction: column; gap: 1rem; }
+    .bot-card {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-dark);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .bot-card:hover { background-color: var(--bg-card-hover); border-color: var(--accent-orange); transform: translateX(4px); }
+    .bot-info { display: flex; gap: 1.2rem; align-items: center; }
+    .bot-avatar { font-size: 2.5rem; color: var(--accent-orange); width: 60px; height: 60px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border-dark); }
+    .bot-name { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem; }
+    .bot-title { font-size: 0.85rem; color: var(--accent-orange); font-weight: 600; margin-bottom: 0.3rem; }
+    .bot-desc { font-size: 0.85rem; color: var(--text-muted); max-width: 450px; }
+    .bot-action { font-weight: 700; font-size: 0.9rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+    .back-link { align-self: flex-start; margin-bottom: 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    .back-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="brand-logo">i<span>Chess</span> Bots</a>
+  </header>
+  <main>
+    <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    <div class="bot-list">
+      <!-- Mikhail Tal Bot Card -->
+      <a href="tal.html" class="bot-card">
+        <div class="bot-info">
+          <div class="bot-avatar"><i class="fa-solid fa-hat-wizard"></i></div>
+          <div>
+            <div class="bot-name">Mikhail Tal</div>
+            <div class="bot-title">The Magician from Riga (Attacking Genius)</div>
+            <div class="bot-desc">Sacrifices pieces aggressively for chaotic tactical complications, king hunts, and initiative over material count.</div>
+          </div>
+        </div>
+        <div class="bot-action">Play <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+    </div>
+  </main>
+</body>
+</html>
