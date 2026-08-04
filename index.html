@@ -21,6 +21,7 @@
       --accent-blue: #3692e7;
       --accent-green: #10b981;
       --accent-orange: #f59e0b;
+      --accent-coach: #e11d48;
       --text-white: #c9d1d9;
       --text-muted: #8b8886;
       --border-dark: #3e3b37;
@@ -114,6 +115,7 @@
 
     .card-play:hover::before { background: var(--accent-pink); }
     .card-bots:hover::before { background: var(--accent-orange); }
+    .card-coach:hover::before { background: var(--accent-coach); }
     .card-pgn:hover::before { background: var(--accent-purple); }
     .card-analyze:hover::before { background: var(--accent-blue); }
     .card-puzzle:hover::before { background: var(--accent-green); }
@@ -125,6 +127,7 @@
 
     .card-play .card-icon { color: var(--accent-pink); }
     .card-bots .card-icon { color: var(--accent-orange); }
+    .card-coach .card-icon { color: var(--accent-coach); }
     .card-pgn .card-icon { color: var(--accent-purple); }
     .card-analyze .card-icon { color: var(--accent-blue); }
     .card-puzzle .card-icon { color: var(--accent-green); }
@@ -189,6 +192,16 @@
           <div class="card-desc">Play against customized chess personalities like "The Magician from Riga" Mikhail Tal.</div>
         </div>
         <div class="card-btn">Choose Bot <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+
+      <!-- NEW COACH CARD -->
+      <a href="coach/coach.html" class="card card-coach" id="btnCoach">
+        <div>
+          <div class="card-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+          <div class="card-title">Coach</div>
+          <div class="card-desc">Get real-time feedback, tactical insights, and personalized training lessons from your virtual chess master.</div>
+        </div>
+        <div class="card-btn">Start Coaching <i class="fa-solid fa-arrow-right"></i></div>
       </a>
 
       <a href="pgn/pgn.html" class="card card-pgn" id="btnPgn">
