@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,7 +115,6 @@
       min-height: 20px;
     }
 
-    /* Clock Styling */
     .player-clock {
       font-family: 'Roboto Mono', monospace;
       font-size: 1.15rem;
@@ -357,12 +355,13 @@
 
     .btn-action:hover { background-color: var(--bg-card-hover); color: #fff; }
     .btn-action:active { background-color: #403d39; }
-    .btn-primary { grid-column: span 2; background-color: #3e2634; border-color: var(--accent); color: #fff; }
+    .btn-primary { background-color: #3e2634; border-color: var(--accent); color: #fff; }
     .btn-primary:hover { background-color: #523145; }
+    .btn-resign { background-color: #422424; border-color: #663b3b; color: #ff6b6b; }
+    .btn-resign:hover { background-color: #592e2e; }
     .btn-hint { background-color: #243542; border-color: #3b5266; color: #00d4ff; }
     .btn-bestmove { background-color: #233b33; border-color: #325a4d; color: #10b981; }
 
-    /* Toast Notification */
     .toast-notification {
       position: fixed;
       bottom: 20px;
@@ -388,7 +387,6 @@
       opacity: 1;
     }
 
-    /* Modal Overlay for FEN import */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -423,7 +421,6 @@
 </head>
 <body>
 
-  <!-- Lichess Standard Audio Elements -->
   <audio id="soundMove" src="https://lichess1.org/assets/sound/standard/Move.mp3" preload="auto"></audio>
   <audio id="soundCapture" src="https://lichess1.org/assets/sound/standard/Capture.mp3" preload="auto"></audio>
   <audio id="soundCheck" src="https://lichess1.org/assets/sound/standard/Check.mp3" preload="auto"></audio>
@@ -537,6 +534,7 @@
           <button class="btn-action btn-hint" id="btnHint"><i class="fa-solid fa-lightbulb"></i> Hint</button>
           <button class="btn-action btn-bestmove" id="btnPlayBest"><i class="fa-solid fa-wand-magic-sparkles"></i> Play Best</button>
           <button class="btn-action btn-primary" id="btnNewGame"><i class="fa-solid fa-plus"></i> New Game</button>
+          <button class="btn-action btn-resign" id="btnResign"><i class="fa-solid fa-flag"></i> Resign</button>
         </div>
 
         <div class="btn-row-3">
@@ -553,7 +551,17 @@
     </aside>
   </div>
 
-  <!-- FEN Import Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-card" style="text-align: center; max-width: 360px;">
+      <h3 id="confirmTitle" style="color: var(--text-white); font-size: 1.1rem;">Are you sure?</h3>
+      <p id="confirmDesc" style="font-size: 0.85rem; color: var(--text-muted);">Do you want to proceed with this action?</p>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+        <button class="btn-action" id="btnCancelConfirm">Cancel</button>
+        <button class="btn-action btn-primary" id="btnAcceptConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="fenModal">
     <div class="modal-card">
       <h3 style="color: var(--text-white); font-size: 1.1rem;"><i class="fa-solid fa-file-import" style="color: var(--accent)"></i> Import FEN Position</h3>
@@ -566,7 +574,18 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
+  <div class="modal-overlay" id="promotionModal">
+    <div class="modal-card" style="text-align: center; max-width: 320px;">
+      <h3 style="color: var(--text-white); font-size: 1.1rem;">Choose Promotion Piece</h3>
+      <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+        <button class="btn-action promo-btn" data-piece="q" style="font-size: 1.5rem; padding: 0.8rem;">♛</button>
+        <button class="btn-action promo-btn" data-piece="r" style="font-size: 1.5rem; padding: 0.8rem;">♜</button>
+        <button class="btn-action promo-btn" data-piece="b" style="font-size: 1.5rem; padding: 0.8rem;">♝</button>
+        <button class="btn-action promo-btn" data-piece="n" style="font-size: 1.5rem; padding: 0.8rem;">♞</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-notification" id="toast">
     <i class="fa-solid fa-check"></i> <span id="toastMsg">Copied to clipboard!</span>
   </div>
@@ -576,19 +595,14 @@
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
   <script>
-    // --- Lichess Sound Engine matching pgn.html format ---
     function playLichessSound(move) {
       if (!move) return;
-
       const soundMove = document.getElementById('soundMove');
       const soundCapture = document.getElementById('soundCapture');
       const soundCheck = document.getElementById('soundCheck');
 
       [soundMove, soundCapture, soundCheck].forEach(s => {
-        if (s) {
-          s.pause();
-          s.currentTime = 0;
-        }
+        if (s) { s.pause(); s.currentTime = 0; }
       });
 
       if (move.san.includes('+') || move.san.includes('#')) {
@@ -600,7 +614,6 @@
       }
     }
 
-    // --- Opening Explorer Database (ECO Dictionary) ---
     const OPENINGS_DB = {
       "e4": "King's Pawn Opening",
       "e4 e5": "Open Game",
@@ -639,12 +652,11 @@
     let selectedSquare = null;
     let lastMove = null;
     let isEngineThinking = false;
+    let pendingPromotion = null;
 
-    // Hint & Best Move Modes
     let isRequestingHint = false;
     let isRequestingAutoMove = false;
 
-    // Clock & Increment State
     let clockInterval = null;
     let whiteTimeSec = 300;
     let blackTimeSec = 300;
@@ -652,6 +664,7 @@
     let isTimeUnlimited = false;
     let isGameOverByFlag = false;
 
+    let pendingConfirmAction = null;
     const pieceSymbols = { p: '♟', r: '♜', n: '♞', b: '♝', q: '♛', k: '♚' };
 
     function showToast(text) {
@@ -750,6 +763,7 @@
         }
 
         updateClockDisplays();
+        saveGameToLocalStorage();
       }, 1000);
     }
 
@@ -765,6 +779,7 @@
       isGameOverByFlag = true;
       const winner = timedOutColor === 'w' ? 'Black' : 'White';
       $('#statusBanner').html(`<i class="fa-solid fa-hourglass-end" style="color:#ff4d4d"></i> Time out! ${winner} wins on time.`);
+      saveGameToLocalStorage();
     }
 
     function detectOpening() {
@@ -911,7 +926,6 @@
       const move = game.move(moveObj);
       if (!move) return null;
 
-      // Fischer Delay / Increment
       if (timeIncrementSec > 0 && !isTimeUnlimited) {
         if (movingColor === 'w') whiteTimeSec += timeIncrementSec;
         else blackTimeSec += timeIncrementSec;
@@ -924,11 +938,11 @@
       board.position(game.fen());
       highlightLastMove();
 
-      // Play Lichess sound effects
       playLichessSound(move);
 
       detectOpening();
       updateUI();
+      saveGameToLocalStorage();
       return move;
     }
 
@@ -964,6 +978,13 @@
       return turn === userColor;
     }
 
+    function isPromotionMove(source, target) {
+      const piece = game.get(source);
+      if (!piece || piece.type !== 'p') return false;
+      const targetRank = target[1];
+      return (piece.color === 'w' && targetRank === '8') || (piece.color === 'b' && targetRank === '1');
+    }
+
     function onDragStart(source, piece) {
       if (!isHumanTurn()) return false;
       if ((userColor === 'white' && piece.search(/^b/) !== -1) ||
@@ -976,6 +997,12 @@
     function onDrop(source, target) {
       if (source === target) {
         showLegalMoves(source);
+        return 'snapback';
+      }
+
+      if (isPromotionMove(source, target)) {
+        pendingPromotion = { from: source, to: target };
+        $('#promotionModal').addClass('active');
         return 'snapback';
       }
 
@@ -1005,12 +1032,32 @@
         }
 
         if (selectedSquare) {
+          if (isPromotionMove(selectedSquare, square)) {
+            pendingPromotion = { from: selectedSquare, to: square };
+            $('#promotionModal').addClass('active');
+            return;
+          }
+
           const move = executeMove({ from: selectedSquare, to: square, promotion: 'q' });
           if (!move) {
             removeHighlights();
             highlightLastMove();
             selectedSquare = null;
           }
+        }
+      });
+
+      $('.promo-btn').click(function() {
+        const chosenPiece = $(this).attr('data-piece');
+        $('#promotionModal').removeClass('active');
+
+        if (pendingPromotion) {
+          executeMove({
+            from: pendingPromotion.from,
+            to: pendingPromotion.to,
+            promotion: chosenPiece
+          });
+          pendingPromotion = null;
         }
       });
     }
@@ -1087,13 +1134,84 @@
       }
     }
 
+    function saveGameToLocalStorage() {
+      const gameState = {
+        moves: game.history(), // Save full move history array so undo works after reload
+        userColor: userColor,
+        targetElo: targetElo,
+        whiteTimeSec: whiteTimeSec,
+        blackTimeSec: blackTimeSec,
+        timeIncrementSec: timeIncrementSec,
+        isTimeUnlimited: isTimeUnlimited,
+        isGameOverByFlag: isGameOverByFlag,
+        lastMove: lastMove
+      };
+      localStorage.setItem('ichess_saved_game', JSON.stringify(gameState));
+    }
+
+    function loadGameFromLocalStorage() {
+      const saved = localStorage.getItem('ichess_saved_game');
+      if (!saved) return false;
+
+      try {
+        const state = JSON.parse(saved);
+        game.reset();
+
+        if (state.moves && Array.isArray(state.moves)) {
+          for (let m of state.moves) {
+            game.move(m);
+          }
+        }
+
+        userColor = state.userColor || 'white';
+        targetElo = state.targetElo || 100;
+        whiteTimeSec = state.whiteTimeSec !== undefined ? state.whiteTimeSec : 300;
+        blackTimeSec = state.blackTimeSec !== undefined ? state.blackTimeSec : 300;
+        timeIncrementSec = state.timeIncrementSec || 0;
+        isTimeUnlimited = !!state.isTimeUnlimited;
+        isGameOverByFlag = !!state.isGameOverByFlag;
+        lastMove = state.lastMove || null;
+
+        $('#sideSelect').val(userColor);
+        $('#eloSlider').val(targetElo);
+        $('#eloValueDisplay').text(targetElo >= 3700 ? '3700 (Max)' : `${targetElo} Elo`);
+        
+        board.orientation(userColor);
+        board.position(game.fen());
+        highlightLastMove();
+        detectOpening();
+        configureEngineStrength();
+
+        if (!game.game_over() && !isGameOverByFlag) {
+          startClockTimer();
+        }
+
+        updateUI();
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function resignGame() {
+      if (game.game_over() || isGameOverByFlag) return;
+      stopClockTimer();
+      isGameOverByFlag = true;
+      const winner = userColor === 'white' ? 'Black' : 'White';
+      $('#statusBanner').html(`<i class="fa-solid fa-flag" style="color:#ff6b6b"></i> You resigned. ${winner} wins.`);
+      saveGameToLocalStorage();
+      showToast('You resigned the game.');
+    }
+
     function startNewGame() {
+      localStorage.removeItem('ichess_saved_game');
       game.reset();
       lastMove = null;
       selectedSquare = null;
       isRequestingHint = false;
       isRequestingAutoMove = false;
       isGameOverByFlag = false;
+      pendingPromotion = null;
 
       userColor = $('#sideSelect').val();
       targetElo = parseInt($('#eloSlider').val());
@@ -1117,6 +1235,7 @@
       removeHighlights();
       startClockTimer();
       updateUI();
+      saveGameToLocalStorage();
     }
 
     function loadCustomFEN(fenStr) {
@@ -1131,6 +1250,7 @@
       lastMove = null;
       selectedSquare = null;
       isGameOverByFlag = false;
+      pendingPromotion = null;
 
       board.position(game.fen());
       removeHighlights();
@@ -1140,6 +1260,7 @@
       $('#evalText').text('0.0');
 
       updateUI();
+      saveGameToLocalStorage();
       showToast('FEN Position Loaded!');
     }
 
@@ -1160,21 +1281,63 @@
 
       $('#btnHint').click(requestHint);
       $('#btnPlayBest').click(requestPlayBestMove);
-      $('#btnNewGame').click(startNewGame);
       
+      $('#btnNewGame').click(() => {
+        pendingConfirmAction = 'newGame';
+        $('#confirmTitle').text('Start New Game?');
+        $('#confirmDesc').text('Your current game progress will be reset.');
+        $('#confirmModal').addClass('active');
+      });
+
+      $('#btnResign').click(() => {
+        if (game.game_over() || isGameOverByFlag) return;
+        pendingConfirmAction = 'resign';
+        $('#confirmTitle').text('Resign Game?');
+        $('#confirmDesc').text('Are you sure you want to resign this game?');
+        $('#confirmModal').addClass('active');
+      });
+
+      $('#btnCancelConfirm').click(() => {
+        $('#confirmModal').removeClass('active');
+        pendingConfirmAction = null;
+      });
+
+      $('#btnAcceptConfirm').click(() => {
+        $('#confirmModal').removeClass('active');
+        if (pendingConfirmAction === 'newGame') {
+          startNewGame();
+        } else if (pendingConfirmAction === 'resign') {
+          resignGame();
+        }
+        pendingConfirmAction = null;
+      });
+
       $('#btnUndo').click(() => {
         if (isEngineThinking || isGameOverByFlag) return;
-        game.undo(); game.undo();
-        lastMove = null;
+        
+        game.undo();
+        game.undo();
+
+        const history = game.history({ verbose: true });
+        if (history.length > 0) {
+          const prev = history[history.length - 1];
+          lastMove = { from: prev.from, to: prev.to };
+        } else {
+          lastMove = null;
+        }
+
+        isGameOverByFlag = false;
         removeHighlights();
+        highlightLastMove();
         board.position(game.fen());
         detectOpening();
         updateUI();
+        saveGameToLocalStorage();
+        showToast('Undid last turn');
       });
 
       $('#btnFlip').click(() => board.flip());
 
-      // Copy PGN & FEN
       $('#btnCopyPGN').click(() => {
         const pgn = game.pgn() || "1. e4";
         navigator.clipboard.writeText(pgn).then(() => showToast('PGN Copied!'));
@@ -1185,7 +1348,6 @@
         navigator.clipboard.writeText(fen).then(() => showToast('FEN Copied!'));
       });
 
-      // Modal FEN Handling
       $('#btnImportFEN').click(() => $('#fenModal').addClass('active'));
       $('#btnCancelFEN').click(() => $('#fenModal').removeClass('active'));
       
@@ -1198,15 +1360,21 @@
         }
       });
 
-      $('#sideSelect, #timeSelect, #incSelect').change(startNewGame);
+      $('#sideSelect, #timeSelect, #incSelect').change(() => {
+        startNewGame();
+      });
 
       $('#eloSlider').on('input change', function() {
         targetElo = parseInt($(this).val());
         $('#eloValueDisplay').text(targetElo >= 3700 ? '3700 (Max)' : `${targetElo} Elo`);
         configureEngineStrength();
+        saveGameToLocalStorage();
       });
 
-      startNewGame();
+      const loaded = loadGameFromLocalStorage();
+      if (!loaded) {
+        startNewGame();
+      }
     });
   </script>
 </body>

@@ -1,0 +1,23 @@
+/* ======================================================== */
+    /* UI COLOR THEME CONFIGURATION                             */
+    /* Modify these variables to change the color of any UI element */
+    /* ======================================================== */
+    :root {
+      --bg-dark: #161512;        /* Main application background */
+      --bg-panel: #262421;       /* Sidebar and main panels background */
+      --bg-card: #2b2925;        /* Cards, clock boxes, and inputs background */
+      --bg-card-hover: #363431;  /* Hover background for interactive elements */
+      --accent: #c27ba0;         /* Primary accent color (active states, borders, buttons) */
+      --text-white: #c9d1d9;     /* Primary text color */
+      --text-muted: #8b8886;     /* Muted text, labels, and secondary indicators */
+      --border-dark: #3e3b37;    /* Border lines and separators */
+      
+      --board-light: #f3e0ec;    /* Light squares on the chessboard */
+      --board-dark: #c27ba0;     /* Dark squares on the chessboard */
+      --highlight-selected: rgba(220, 100, 160, 0.5); /* Highlight color for selected squares */
+      --lastmove-yellow: rgba(155, 81, 224, 0.5);    /* Highlight color for the last played move */
+      
+      --eval-bg-dark: #2b2925;   /* Evaluation bar background */
+      --eval-pink: #c27ba0;      /* Evaluation bar theme fill */
+      --eval-white: #ffffff;     /* Evaluation bar opponent fill */
+    }
