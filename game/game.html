@@ -10,10 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+  
+  <!-- html2canvas for robust Image/PNG exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- gifshot for animated GIF generation directly in the browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
 
   <style>
     :root {
-      --bg-dark: #161512;   ////appearance: 
+      --bg-dark: #161512;
       --bg-panel: #262421;
       --bg-card: #2b2925;
       --bg-card-hover: #363431;
@@ -283,16 +288,45 @@
     }
 
     .notation-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .notation-table td { padding: 0.35rem 0.8rem; border-bottom: 1px solid #302e2c; }
+    .notation-table tr { border-bottom: 1px solid #302e2c; }
     .notation-table tr:nth-child(even) { background-color: var(--bg-card); }
-    .move-num { color: var(--text-muted); width: 20%; background: #201e1b; text-align: center; }
-    .move-white, .move-black { width: 40%; font-weight: 600; color: #d1d5d8; cursor: pointer; }
-    .move-white:hover, .move-black:hover { background: var(--bg-card-hover); }
+    .notation-table td { padding: 0.4rem 0.8rem; }
+    
+    .move-num { color: var(--text-muted); width: 15%; background: #201e1b; text-align: center; font-family: 'Roboto Mono', monospace; font-size: 0.82rem; }
+    .move-white, .move-black { width: 42.5%; font-weight: 600; color: #d1d5d8; cursor: pointer; border-radius: 3px; }
+    .move-white:hover, .move-black:hover { background: var(--bg-card-hover); color: #fff; }
+    .move-white.active-move, .move-black.active-move { background: var(--accent) !important; color: #fff !important; }
+
+    .move-nav-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background-color: var(--bg-card);
+      border-top: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .btn-nav {
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--border-dark);
+      color: var(--text-white);
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      transition: background 0.1s;
+    }
+    .btn-nav:last-child { border-right: none; }
+    .btn-nav:hover { background-color: var(--bg-card-hover); color: #fff; }
+    .btn-nav:active { background-color: #403d39; }
+    .btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .control-panel {
       padding: 0.85rem;
       background-color: var(--bg-panel);
-      border-top: 1px solid var(--border-dark);
       display: flex;
       flex-direction: column;
       gap: 0.65rem;
@@ -417,6 +451,99 @@
       gap: 1rem;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
+
+    .export-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-dark);
+      gap: 1.5rem;
+    }
+
+    .export-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding-bottom: 0.5rem;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .export-tab.active {
+      color: #fff;
+    }
+
+    .export-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #fff;
+    }
+
+    .export-content-pane {
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .export-content-pane.active {
+      display: flex;
+    }
+
+    .export-textarea {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      color: var(--text-white);
+      border-radius: 4px;
+      padding: 0.5rem;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.8rem;
+      resize: none;
+      height: 140px;
+      outline: none;
+    }
+
+    .btn-green-download {
+      background-color: #81b64c;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.7rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .btn-green-download:hover {
+      background-color: #72a43e;
+    }
+    .btn-green-download:disabled {
+      background-color: #4a5c38;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .export-preview-box {
+      width: 100%;
+      aspect-ratio: 1;
+      max-height: 280px;
+      margin: 0 auto;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -447,7 +574,7 @@
           <div class="eval-fill" id="evalFill"></div>
         </div>
         
-        <div class="board-frame">
+        <div class="board-frame" id="exportableBoardFrame">
           <div id="board"></div>
         </div>
       </div>
@@ -481,6 +608,13 @@
         <table class="notation-table">
           <tbody id="moveLog"></tbody>
         </table>
+      </div>
+
+      <div class="move-nav-bar">
+        <button class="btn-nav" id="btnFirstMove" title="First Move"><i class="fa-solid fa-angles-left"></i></button>
+        <button class="btn-nav" id="btnPrevMove" title="Previous Move"><i class="fa-solid fa-angle-left"></i> Prev</button>
+        <button class="btn-nav" id="btnNextMove" title="Next Move">Next <i class="fa-solid fa-angle-right"></i></button>
+        <button class="btn-nav" id="btnLastMove" title="Latest Move"><i class="fa-solid fa-angles-right"></i></button>
       </div>
 
       <div class="control-panel">
@@ -538,17 +672,64 @@
         </div>
 
         <div class="btn-row-3">
-          <button class="btn-action" id="btnUndo"><i class="fa-solid fa-backward-step"></i> Undo</button>
           <button class="btn-action" id="btnFlip"><i class="fa-solid fa-retweet"></i> Flip</button>
-          <button class="btn-action" id="btnCopyPGN"><i class="fa-solid fa-copy"></i> PGN</button>
-        </div>
-
-        <div class="btn-row-3">
-          <button class="btn-action" id="btnCopyFEN"><i class="fa-solid fa-code"></i> FEN</button>
-          <button class="btn-action" id="btnImportFEN" style="grid-column: span 2;"><i class="fa-solid fa-file-import"></i> Load FEN Position</button>
+          <button class="btn-action" id="btnShareModalOpen"><i class="fa-solid fa-share-nodes"></i> Share</button>
+          <button class="btn-action" id="btnImportFEN"><i class="fa-solid fa-file-import"></i> FEN</button>
         </div>
       </div>
     </aside>
+  </div>
+
+  <!-- Share/Export Modal with PGN, Image, and Gif tabs + Download buttons -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="export-tabs">
+        <button class="export-tab active" data-target="pane-pgn">PGN</button>
+        <button class="export-tab" data-target="pane-image">Image</button>
+        <button class="export-tab" data-target="pane-gif">Gif</button>
+      </div>
+
+      <!-- PGN Pane -->
+      <div class="export-content-pane active" id="pane-pgn">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">FEN</div>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="exportFenBox" readonly>
+          <button class="btn-action" id="btnCopyExportFen" style="padding: 0.3rem 0.6rem;"><i class="fa-solid fa-copy"></i></button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.2rem;">
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">PGN</span>
+        </div>
+        <textarea class="export-textarea" id="exportPgnArea" readonly></textarea>
+        
+        <button class="btn-green-download" id="btnDownloadPgn">
+          <i class="fa-solid fa-download"></i> Download PGN
+        </button>
+      </div>
+
+      <!-- Image Pane -->
+      <div class="export-content-pane" id="pane-image">
+        <div class="export-preview-box" id="imagePreviewContainer"></div>
+        <button class="btn-green-download" id="btnDownloadImage">
+          <i class="fa-solid fa-download"></i> Download Image (PNG)
+        </button>
+      </div>
+
+      <!-- Gif Pane -->
+      <div class="export-content-pane" id="pane-gif">
+        <div class="export-preview-box" id="gifPreviewContainer" style="flex-direction: column; gap: 0.5rem; text-align: center; padding: 1rem;">
+          <i class="fa-solid fa-film" style="font-size: 2.5rem; color: var(--accent);"></i>
+          <span id="gifStatusText" style="font-size: 0.85rem; color: var(--text-muted);">Generate an animated replay GIF of all moves played so far.</span>
+        </div>
+        <button class="btn-green-download" id="btnDownloadGif">
+          <i class="fa-solid fa-download"></i> Download Animated GIF
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 0.2rem;">
+        <button class="btn-action" id="btnCloseShareModal">Close</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="confirmModal">
@@ -565,7 +746,7 @@
   <div class="modal-overlay" id="fenModal">
     <div class="modal-card">
       <h3 style="color: var(--text-white); font-size: 1.1rem;"><i class="fa-solid fa-file-import" style="color: var(--accent)"></i> Import FEN Position</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted);">Paste a FEN position string to set up custom chess puzzles, practice endgames, or position studies.</p>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">Paste a FEN position string to set up custom chess puzzles or practice positions.</p>
       <input type="text" id="fenInput" placeholder="e.g. r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3">
       <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
         <button class="btn-action" id="btnCancelFEN">Cancel</button>
@@ -587,7 +768,7 @@
   </div>
 
   <div class="toast-notification" id="toast">
-    <i class="fa-solid fa-check"></i> <span id="toastMsg">Copied to clipboard!</span>
+    <i class="fa-solid fa-check"></i> <span id="toastMsg">Action complete!</span>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -619,33 +800,19 @@
       "e4 e5": "Open Game",
       "e4 e5 Nf3 Nc6 Bb5": "Ruy Lopez",
       "e4 e5 Nf3 Nc6 Bc4": "Italian Game",
-      "e4 e5 Nf3 Nc6 Bc4 Bc5": "Giuoco Piano",
-      "e4 e5 Nf3 Nf6": "Petrov's Defense",
       "e4 c5": "Sicilian Defense",
-      "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6": "Sicilian Defense: Najdorf Variation",
-      "e4 c5 Nf3 Nc6": "Sicilian Defense: Old Sicilian",
-      "e4 e6": "French Defense",
-      "e4 c6": "Caro-Kann Defense",
-      "e4 d6": "Pirc Defense",
-      "e4 g6": "Modern Defense",
       "d4": "Queen's Pawn Opening",
       "d4 d5": "Closed Game",
       "d4 d5 c4": "Queen's Gambit",
-      "d4 d5 c4 dxc4": "Queen's Gambit Accepted",
-      "d4 d5 c4 e6": "Queen's Gambit Declined",
-      "d4 d5 c4 c6": "Slav Defense",
-      "d4 Nf6": "Indian Defense",
-      "d4 Nf6 c4 g6 Nc3 d5": "Grünfeld Defense",
-      "d4 Nf6 c4 g6 Nc3 Bg7": "King's Indian Defense",
-      "d4 Nf6 c4 e6 Nc3 Bb4": "Nimzo-Indian Defense",
       "c4": "English Opening",
-      "Nf3": "Réti Opening",
-      "f4": "Bird's Opening",
-      "b3": "Nimzo-Larsen Attack"
+      "Nf3": "Réti Opening"
     };
 
     let board = null;
     let game = new Chess();
+    let moveHistoryList = []; 
+    let currentViewIndex = -1; 
+
     let stockfish = null;
     let userColor = 'white';
     let targetElo = 100;
@@ -735,11 +902,8 @@
       const topIsActive = userColor !== activeColor;
       const bottomIsActive = userColor === activeColor;
 
-      $('#topClock').toggleClass('active', topIsActive && !game.game_over() && !isGameOverByFlag);
-      $('#bottomClock').toggleClass('active', bottomIsActive && !game.game_over() && !isGameOverByFlag);
-
-      $('#topClock').toggleClass('low-time', !isTimeUnlimited && topSec <= 10 && topSec > 0);
-      $('#bottomClock').toggleClass('low-time', !isTimeUnlimited && bottomSec <= 10 && bottomSec > 0);
+      $('#topClock').toggleClass('active', topIsActive && !game.game_over() && !isGameOverByFlag && isAtLivePosition());
+      $('#bottomClock').toggleClass('active', bottomIsActive && !game.game_over() && !isGameOverByFlag && isAtLivePosition());
     }
 
     function startClockTimer() {
@@ -747,12 +911,11 @@
       if (isTimeUnlimited) return;
 
       clockInterval = setInterval(() => {
-        if (game.game_over() || isGameOverByFlag) {
-          stopClockTimer();
+        if (game.game_over() || isGameOverByFlag || !isAtLivePosition()) {
           return;
         }
 
-        if (game.history().length === 0 && game.turn() === 'w' && userColor === 'white') return;
+        if (moveHistoryList.length === 0 && game.turn() === 'w' && userColor === 'white') return;
 
         if (game.turn() === 'w') {
           whiteTimeSec--;
@@ -783,7 +946,7 @@
     }
 
     function detectOpening() {
-      const historyStr = game.history().join(' ');
+      const historyStr = moveHistoryList.map(m => m.san).join(' ');
       let matchedOpening = null;
 
       Object.keys(OPENINGS_DB).forEach(pgnKey => {
@@ -795,7 +958,7 @@
       if (matchedOpening) {
         $('#openingName').text(matchedOpening);
         $('#openingBanner').show();
-      } else if (game.history().length === 0) {
+      } else if (moveHistoryList.length === 0) {
         $('#openingBanner').hide();
       }
     }
@@ -846,7 +1009,7 @@
             if (tempMove) {
               const sanNotation = tempMove.san;
               game.undo();
-              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try <strong>${sanNotation}</strong> (${rawBestMove.from} ➔ ${rawBestMove.to})`);
+              $('#statusBanner').html(`<i class="fa-solid fa-lightbulb" style="color:#00d4ff"></i> Hint: Try <strong>${sanNotation}</strong>`);
             }
             return;
           }
@@ -882,7 +1045,7 @@
     }
 
     function triggerEngine() {
-      if (!stockfish || game.game_over() || isGameOverByFlag || isEngineThinking) return;
+      if (!stockfish || game.game_over() || isGameOverByFlag || isEngineThinking || !isAtLivePosition()) return;
       isEngineThinking = true;
       $('#engineStatus').text('Thinking...');
       stockfish.postMessage(`position fen ${game.fen()}`);
@@ -894,7 +1057,7 @@
     }
 
     function requestHint() {
-      if (!isHumanTurn() || !stockfish) return;
+      if (!isHumanTurn() || !stockfish || !isAtLivePosition()) return;
       isRequestingHint = true;
       isEngineThinking = true;
       $('#engineStatus').text('Calculating hint...');
@@ -907,7 +1070,7 @@
     }
 
     function requestPlayBestMove() {
-      if (!isHumanTurn() || !stockfish) return;
+      if (!isHumanTurn() || !stockfish || !isAtLivePosition()) return;
       isRequestingAutoMove = true;
       isEngineThinking = true;
       $('#engineStatus').text('Calculating best move...');
@@ -919,12 +1082,24 @@
       stockfish.postMessage('go depth 12 movetime 400');
     }
 
+    function isAtLivePosition() {
+      return currentViewIndex === -1 || currentViewIndex === moveHistoryList.length - 1;
+    }
+
     function executeMove(moveObj) {
       if (isGameOverByFlag) return null;
-      const movingColor = game.turn();
+      
+      if (!isAtLivePosition()) {
+        moveHistoryList = moveHistoryList.slice(0, currentViewIndex + 1);
+        rebuildGameFromHistory();
+      }
 
+      const movingColor = game.turn();
       const move = game.move(moveObj);
       if (!move) return null;
+
+      moveHistoryList.push(move);
+      currentViewIndex = moveHistoryList.length - 1;
 
       if (timeIncrementSec > 0 && !isTimeUnlimited) {
         if (movingColor === 'w') whiteTimeSec += timeIncrementSec;
@@ -946,6 +1121,38 @@
       return move;
     }
 
+    function rebuildGameFromHistory() {
+      game.reset();
+      for (let m of moveHistoryList) {
+        game.move({ from: m.from, to: m.to, promotion: m.promotion });
+      }
+    }
+
+    function jumpToPly(plyIndex) {
+      if (plyIndex < -1 || plyIndex >= moveHistoryList.length) return;
+      currentViewIndex = plyIndex;
+
+      game.reset();
+      const targetCount = plyIndex === -1 ? 0 : plyIndex + 1;
+      for (let i = 0; i < targetCount; i++) {
+        const m = moveHistoryList[i];
+        game.move({ from: m.from, to: m.to, promotion: m.promotion });
+      }
+
+      if (targetCount > 0) {
+        const lastM = moveHistoryList[targetCount - 1];
+        lastMove = { from: lastM.from, to: lastM.to };
+      } else {
+        lastMove = null;
+      }
+
+      selectedSquare = null;
+      removeHighlights();
+      board.position(game.fen());
+      highlightLastMove();
+      updateUI();
+    }
+
     function removeHighlights() {
       $('#board .square-55d63').removeClass('legal-dot legal-capture highlight-selected highlight-hint-from highlight-hint-to');
     }
@@ -959,6 +1166,7 @@
     }
 
     function showLegalMoves(square) {
+      if (!isAtLivePosition()) return;
       removeHighlights();
       highlightLastMove();
       selectedSquare = square;
@@ -973,7 +1181,7 @@
     }
 
     function isHumanTurn() {
-      if (game.game_over() || isGameOverByFlag || isEngineThinking) return false;
+      if (game.game_over() || isGameOverByFlag || isEngineThinking || !isAtLivePosition()) return false;
       const turn = game.turn() === 'w' ? 'white' : 'black';
       return turn === userColor;
     }
@@ -1067,6 +1275,7 @@
       updateCaptured();
       updateBanner();
       updateClockDisplays();
+      updateNavButtonsState();
 
       if (game.game_over() || isGameOverByFlag) {
         stopClockTimer();
@@ -1074,13 +1283,29 @@
       }
 
       const turn = game.turn() === 'w' ? 'white' : 'black';
-      if (turn !== userColor) {
+      if (turn !== userColor && isAtLivePosition()) {
         setTimeout(triggerEngine, 250);
       }
     }
 
+    function updateNavButtonsState() {
+      const hasMoves = moveHistoryList.length > 0;
+      const atStart = currentViewIndex === -1;
+      const atEnd = currentViewIndex === moveHistoryList.length - 1;
+
+      $('#btnFirstMove').prop('disabled', !hasMoves || atStart);
+      $('#btnPrevMove').prop('disabled', !hasMoves || atStart);
+      $('#btnNextMove').prop('disabled', !hasMoves || atEnd);
+      $('#btnLastMove').prop('disabled', !hasMoves || atEnd);
+    }
+
     function updateBanner() {
       if (isGameOverByFlag) return;
+
+      if (!isAtLivePosition()) {
+        $('#statusBanner').html(`<i class="fa-solid fa-eye" style="color:#00d4ff"></i> Reviewing History (Ply ${currentViewIndex + 1}/${moveHistoryList.length})`);
+        return;
+      }
 
       const turn = game.turn() === 'w' ? 'White' : 'Black';
       if (game.in_checkmate()) {
@@ -1095,30 +1320,40 @@
     }
 
     function updateNotation() {
-      const history = game.history({ verbose: true });
       const tbody = $('#moveLog').empty();
 
-      for (let i = 0; i < history.length; i += 2) {
+      for (let i = 0; i < moveHistoryList.length; i += 2) {
         const num = Math.floor(i / 2) + 1;
-        const w = history[i] ? history[i].san : '';
-        const b = history[i + 1] ? history[i + 1].san : '';
+        const wMove = moveHistoryList[i];
+        const bMove = moveHistoryList[i + 1];
+
+        const wSan = wMove ? wMove.san : '';
+        const bSan = bMove ? bMove.san : '';
+
+        const wActive = (currentViewIndex === i) ? 'active-move' : '';
+        const bActive = (currentViewIndex === i + 1) ? 'active-move' : '';
 
         tbody.append(`<tr>
-          <td class="move-num">${num}</td>
-          <td class="move-white">${w}</td>
-          <td class="move-black">${b}</td>
+          <td class="move-num">${num}.</td>
+          <td class="move-white ${wActive}" data-ply="${i}">${wSan}</td>
+          <td class="move-black ${bActive}" data-ply="${i + 1}">${bSan}</td>
         </tr>`);
       }
+
+      $('#moveLog').on('click', 'td[data-ply]', function() {
+        const ply = parseInt($(this).attr('data-ply'));
+        jumpToPly(ply);
+      });
 
       const container = $('.notation-container');
       container.scrollTop(container[0].scrollHeight);
     }
 
     function updateCaptured() {
-      const history = game.history({ verbose: true });
+      const activeList = currentViewIndex === -1 ? [] : moveHistoryList.slice(0, currentViewIndex + 1);
       const wCap = [], bCap = [];
 
-      history.forEach(m => {
+      activeList.forEach(m => {
         if (m.captured) {
           if (m.color === 'w') wCap.push(pieceSymbols[m.captured]);
           else bCap.push(pieceSymbols[m.captured]);
@@ -1136,7 +1371,7 @@
 
     function saveGameToLocalStorage() {
       const gameState = {
-        moves: game.history(), // Save full move history array so undo works after reload
+        moves: moveHistoryList.map(m => ({ from: m.from, to: m.to, promotion: m.promotion, san: m.san })),
         userColor: userColor,
         targetElo: targetElo,
         whiteTimeSec: whiteTimeSec,
@@ -1156,13 +1391,16 @@
       try {
         const state = JSON.parse(saved);
         game.reset();
+        moveHistoryList = [];
 
         if (state.moves && Array.isArray(state.moves)) {
           for (let m of state.moves) {
-            game.move(m);
+            const res = game.move(m);
+            if (res) moveHistoryList.push(res);
           }
         }
 
+        currentViewIndex = moveHistoryList.length - 1;
         userColor = state.userColor || 'white';
         targetElo = state.targetElo || 100;
         whiteTimeSec = state.whiteTimeSec !== undefined ? state.whiteTimeSec : 300;
@@ -1206,6 +1444,8 @@
     function startNewGame() {
       localStorage.removeItem('ichess_saved_game');
       game.reset();
+      moveHistoryList = [];
+      currentViewIndex = -1;
       lastMove = null;
       selectedSquare = null;
       isRequestingHint = false;
@@ -1247,6 +1487,8 @@
         return;
       }
 
+      moveHistoryList = [];
+      currentViewIndex = -1;
       lastMove = null;
       selectedSquare = null;
       isGameOverByFlag = false;
@@ -1262,6 +1504,27 @@
       updateUI();
       saveGameToLocalStorage();
       showToast('FEN Position Loaded!');
+    }
+
+    function prepareShareModal() {
+      const fen = game.fen();
+      $('#exportFenBox').val(fen);
+      
+      let pgnHeader = `[Event "iChess Match"]\n[Site "Local Browser"]\n[Date "${new Date().toISOString().slice(0,10)}"]\n[White "Player"]\n[Black "Stockfish Elo ${targetElo}"]\n[Result "*"]\n\n`;
+      let movesString = moveHistoryList.map((m, idx) => {
+        if (idx % 2 === 0) return `${Math.floor(idx/2)+1}. ${m.san}`;
+        return m.san;
+      }).join(' ');
+      
+      $('#exportPgnArea').val(pgnHeader + movesString);
+
+      // Render live preview for Image tab
+      const $preview = $('#imagePreviewContainer').empty();
+      const $clonedBoard = $('#exportableBoardFrame').clone();
+      $clonedBoard.css({ 'width': '100%', 'height': '100%', 'transform': 'none' });
+      $preview.append($clonedBoard);
+
+      $('#gifStatusText').text('Ready to compile animated GIF from game moves.');
     }
 
     $(document).ready(function() {
@@ -1312,40 +1575,132 @@
         pendingConfirmAction = null;
       });
 
-      $('#btnUndo').click(() => {
-        if (isEngineThinking || isGameOverByFlag) return;
-        
-        game.undo();
-        game.undo();
-
-        const history = game.history({ verbose: true });
-        if (history.length > 0) {
-          const prev = history[history.length - 1];
-          lastMove = { from: prev.from, to: prev.to };
-        } else {
-          lastMove = null;
-        }
-
-        isGameOverByFlag = false;
-        removeHighlights();
-        highlightLastMove();
-        board.position(game.fen());
-        detectOpening();
-        updateUI();
-        saveGameToLocalStorage();
-        showToast('Undid last turn');
-      });
+      $('#btnFirstMove').click(() => jumpToPly(-1));
+      $('#btnPrevMove').click(() => jumpToPly(currentViewIndex - 1));
+      $('#btnNextMove').click(() => jumpToPly(currentViewIndex + 1));
+      $('#btnLastMove').click(() => jumpToPly(moveHistoryList.length - 1));
 
       $('#btnFlip').click(() => board.flip());
 
-      $('#btnCopyPGN').click(() => {
-        const pgn = game.pgn() || "1. e4";
-        navigator.clipboard.writeText(pgn).then(() => showToast('PGN Copied!'));
+      $('#btnShareModalOpen').click(() => {
+        prepareShareModal();
+        $('#shareModal').addClass('active');
       });
 
-      $('#btnCopyFEN').click(() => {
-        const fen = game.fen();
-        navigator.clipboard.writeText(fen).then(() => showToast('FEN Copied!'));
+      $('#btnCloseShareModal').click(() => $('#shareModal').removeClass('active'));
+
+      $('.export-tab').click(function() {
+        $('.export-tab').removeClass('active');
+        $(this).addClass('active');
+        $('.export-content-pane').removeClass('active');
+        $(`#${$(this).attr('data-target')}`).addClass('active');
+      });
+
+      $('#btnCopyExportFen').click(() => {
+        navigator.clipboard.writeText($('#exportFenBox').val()).then(() => showToast('FEN copied!'));
+      });
+
+      // 1. Download PGN Handler
+      $('#btnDownloadPgn').click(() => {
+        const pgnText = $('#exportPgnArea').val();
+        const blob = new Blob([pgnText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ichess_game_${new Date().toISOString().slice(0,10)}.pgn`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('PGN downloaded successfully!');
+      });
+
+      // 2. Download Image (PNG) Handler using html2canvas
+      $('#btnDownloadImage').click(() => {
+        const boardElement = document.getElementById('exportableBoardFrame');
+        if (!boardElement) return;
+        
+        html2canvas(boardElement, { backgroundColor: '#161512', scale: 2, logging: false }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = `ichess_position_${new Date().toISOString().slice(0,10)}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          showToast('Image downloaded successfully!');
+        }).catch(() => {
+          showToast('Error generating image export.');
+        });
+      });
+
+      // 3. Download Animated GIF Handler using gifshot
+      $('#btnDownloadGif').click(() => {
+        if (moveHistoryList.length === 0) {
+          showToast('Play some moves first to generate a GIF replay!');
+          return;
+        }
+
+        const $btn = $('#btnDownloadGif').prop('disabled', true);
+        $('#gifStatusText').text('Rendering frames for animated GIF... Please wait.');
+
+        // Replay moves on a temporary offscreen chess instance & capture canvases
+        const tempGame = new Chess();
+        const frames = [];
+        const fBoardContainer = document.getElementById('exportableBoardFrame');
+
+        // We temporarily jump through history states
+        const savedPly = currentViewIndex;
+
+        // Collect snapshots for initial state + each move
+        jumpToPly(-1);
+        
+        setTimeout(() => {
+          // Take snapshot 0 (start)
+          html2canvas(fBoardContainer, { backgroundColor: '#161512', scale: 1, logging: false }).then(canvas0 => {
+            frames.push(canvas0.toDataURL('image/png'));
+
+            // Step through all moves sequentially
+            let step = 0;
+            const captureNext = () => {
+              if (step < moveHistoryList.length) {
+                jumpToPly(step);
+                step++;
+                setTimeout(() => {
+                  html2canvas(fBoardContainer, { backgroundColor: '#161512', scale: 1, logging: false }).then(canvasStep => {
+                    frames.push(canvasStep.toDataURL('image/png'));
+                    captureNext();
+                  });
+                }, 100);
+              } else {
+                // Restore original view
+                jumpToPly(savedPly);
+
+                // Now invoke gifshot
+                gifshot.createGIF({
+                  images: frames,
+                  interval: 0.8,
+                  numFrames: frames.length,
+                  frameDuration: 8,
+                  sampleInterval: 10,
+                  width: 400,
+                  height: 400
+                }, function(obj) {
+                  $btn.prop('disabled', false);
+                  if (!obj.error) {
+                    $('#gifStatusText').text('GIF generated successfully!');
+                    const link = document.createElement('a');
+                    link.download = `ichess_replay_${new Date().toISOString().slice(0,10)}.gif`;
+                    link.href = obj.image;
+                    link.click();
+                    showToast('Animated GIF downloaded!');
+                  } else {
+                    $('#gifStatusText').text('Error rendering GIF.');
+                    showToast('Could not create GIF.');
+                  }
+                });
+              }
+            };
+            captureNext();
+          });
+        }, 200);
       });
 
       $('#btnImportFEN').click(() => $('#fenModal').addClass('active'));

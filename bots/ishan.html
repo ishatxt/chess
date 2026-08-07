@@ -635,7 +635,7 @@
     let game = new Chess();
     let stockfish = null;
     let userColor = 'white';
-    let targetElo = 1650; 
+    let targetElo = 1800; 
     let selectedSquare = null;
     let lastMove = null;
     let isEngineThinking = false;
@@ -670,14 +670,14 @@
           stockfish.onmessage = handleEngineMessage;
           stockfish.postMessage('uci');
           configureEngineStrength();
-          $('#engineStatus').text('Ready (Elo: 1650)');
+          $('#engineStatus').text('Ready (Elo: 1800)');
         })
         .catch(() => {
           stockfish = new Worker('stockfish.js');
           stockfish.onmessage = handleEngineMessage;
           stockfish.postMessage('uci');
           configureEngineStrength();
-          $('#engineStatus').text('Ready (Elo: 1650)');
+          $('#engineStatus').text('Ready (Elo: 1800)');
         });
     }
 
@@ -808,7 +808,7 @@
           if (isRequestingHint) {
             isRequestingHint = false;
             isEngineThinking = false;
-            $('#engineStatus').text('Ready (Elo: 1650)');
+            $('#engineStatus').text('Ready (Elo: 1800)');
 
             removeHighlights();
             highlightLastMove();
@@ -828,7 +828,7 @@
           if (isRequestingAutoMove) {
             isRequestingAutoMove = false;
             isEngineThinking = false;
-            $('#engineStatus').text('Ready (Elo: 1650)');
+            $('#engineStatus').text('Ready (Elo: 1800)');
             executeMove(rawBestMove);
             return;
           }
@@ -836,7 +836,7 @@
           executeMove(rawBestMove);
         }
         isEngineThinking = false;
-        $('#engineStatus').text('Ready (Elo: 1650)');
+        $('#engineStatus').text('Ready (Elo: 1800)');
       }
     }
 

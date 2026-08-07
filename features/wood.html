@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess.com Wood Theme Fixed</title>
+  <style>
+      body {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #1a100a;
+          margin: 0;
+          font-family: Arial, sans-serif;
+      }
+      .board-container {
+          border: 8px solid #2d1c11;
+          box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+          border-radius: 4px;
+      }
+      /* Apply full Chess.com dark wood board background ONCE here */
+      .board {
+          display: grid;
+          grid-template-columns: repeat(8, 75px);
+          grid-template-rows: repeat(8, 75px);
+          width: 600px;
+          height: 600px;
+          background-image: url('https://images.chesscomfiles.com/chess-themes/boards/dark_wood/200.png');
+          background-size: cover;
+      }
+      .square {
+          width: 75px;
+          height: 75px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          cursor: pointer;
+          box-sizing: border-box;
+      }
+      .square.selected {
+          background-color: rgba(204, 145, 34, 0.5) !important;
+      }
+      .piece {
+          width: 75px;
+          height: 75px;
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          pointer-events: none;
+      }
+
+      /* Chess.com individual piece PNG URLs */
+      .piece.P { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/wp.png'); }
+      .piece.R { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/wr.png'); }
+      .piece.N { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/wn.png'); }
+      .piece.B { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/wb.png'); }
+      .piece.Q { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/wq.png'); }
+      .piece.K { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/wk.png'); }
+
+      .piece.p { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/bp.png'); }
+      .piece.r { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/br.png'); }
+      .piece.n { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/bn.png'); }
+      .piece.b { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/bb.png'); }
+      .piece.q { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/bq.png'); }
+      .piece.k { background-image: url('https://images.chesscomfiles.com/chess-themes/pieces/wood/150/bk.png'); }
+  </style>
+</head>
+<body>
+
+<div class="board-container">
+    <div class="board" id="board"></div>
+</div>
+
+<script>
+    let boardState = [
+        ['r','n','b','q','k','b','n','r'],
+        ['p','p','p','p','p','p','p','p'],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['P','P','P','P','P','P','P','P'],
+        ['R','N','B','Q','K','B','N','R']
+    ];
+
+    let selectedSquare = null;
+    let turn = 'white';
+
+    function renderBoard() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                
+                const piece = boardState[r][c];
+                if (piece) {
+                    const pieceDiv = document.createElement('div');
+                    pieceDiv.className = `piece ${piece}`;
+                    square.appendChild(pieceDiv);
+                }
+
+                if (selectedSquare && selectedSquare.row === r && selectedSquare.col === c) {
+                    square.classList.add('selected');
+                }
+
+                square.addEventListener('click', () => handleSquareClick(r, c));
+                boardElement.appendChild(square);
+            }
+        }
+    }
+
+    function handleSquareClick(r, c) {
+        const piece = boardState[r][c];
+        const isWhitePiece = piece && piece === piece.toUpperCase();
+        const isBlackPiece = piece && piece === piece.toLowerCase();
+
+        if (!selectedSquare) {
+            if ((turn === 'white' && isWhitePiece) || (turn === 'black' && isBlackPiece)) {
+                selectedSquare = { row: r, col: c };
+            }
+        } else {
+            if (selectedSquare.row === r && selectedSquare.col === c) {
+                selectedSquare = null;
+            } else {
+                boardState[r][c] = boardState[selectedSquare.row][selectedSquare.col];
+                boardState[selectedSquare.row][selectedSquare.col] = '';
+                selectedSquare = null;
+                turn = turn === 'white' ? 'black' : 'white';
+            }
+        }
+        renderBoard();
+    }
+
+    renderBoard();
+</script>
+
+</body>
+</html>
