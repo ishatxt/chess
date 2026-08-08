@@ -4,7 +4,7 @@
 
 **Live site:** [https://ishatxt.github.io/chess/](https://ishatxt.github.io/chess/)
 
-iChess is a client-side chess platform built around the Stockfish engine. It ships as a collection of static HTML pages with zero build step and no backend — every feature runs locally in your browser. Play the engine with calibrated Elo strength, challenge chess legends, import real games from Chess.com or Lichess, train tactics, and export your games as PGN, image, or animated GIF.
+iChess is a client-side chess platform built around the Stockfish engine. It ships as a collection of static HTML pages with zero build step and no backend  every feature runs locally in your browser. Play the engine with calibrated Elo strength, challenge chess legends, import real games from Chess.com or Lichess, train tactics, and export your games as PGN, image, or animated GIF.
 
 ---
 
