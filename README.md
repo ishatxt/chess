@@ -89,7 +89,7 @@ Each bot is a personality profile that styles a Stockfish instance with a signat
 
 | Bot | Title | Style | Rating |
 | --- | --- | --- | --- |
-| Ishan | The Code Architect | Precision calculation, sound positional play, bulletproof execution | 2800 |
+| Ishan | The Code Architect | Precision calculation, sound positional play, bulletproof execution | 1700 |
 | Bobby Fischer | The World Champion | Relentless tactics, uncompromising pursuit of the win | 2785 |
 | Alexander Alekhine | The Tactical Genius | Complex, aggressive attacks, unorthodox maneuvers | 2750 |
 | José Raúl Capablanca | The Human Chess Machine | Clear positional intuition, flawless endgames | 2725 |
